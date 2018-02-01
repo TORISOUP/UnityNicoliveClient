@@ -77,7 +77,7 @@ client.SendOperatorCommentAsync("テスト投稿").Subscribe();
 client.SendOperatorCommentAsync("テスト投稿"); //Subscribeを省略しても実行される
 ```
 
-#配布ライセンス
+# 配布ライセンス
 
 MITライセンス
 
