@@ -9,10 +9,20 @@ namespace NicoliveClient.Example
         [SerializeField] private GameObject _loginPanel;
         [SerializeField] private GameObject _mainPanel;
 
-        private NicoliveApiClient _nicoliveApiClient;
         public NicoliveApiClient NicoliveApiClient { get { return _nicoliveApiClient; } }
 
+        /// <summary>
+        /// 現在の部屋情報
+        /// </summary>
+        public ReactiveDictionary<int, Room> CurrentRooms
+        {
+            get { return _currentRooms; }
+        }
+        private ReactiveDictionary<int, Room> _currentRooms = new ReactiveDictionary<int, Room>();
+        private NicoliveApiClient _nicoliveApiClient;
         private StringReactiveProperty _currentProgramId = new StringReactiveProperty("");
+
+
 
         /// <summary>
         /// 現在の対象番組ID
