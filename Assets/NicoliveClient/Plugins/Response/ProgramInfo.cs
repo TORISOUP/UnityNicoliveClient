@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace NicoliveClient
@@ -73,7 +74,7 @@ namespace NicoliveClient
                 case "test":
                     s = ProgramStatus.Test;
                     break;
-                case "on_air":
+                case "onAir":
                     s = ProgramStatus.OnAir;
                     break;
                 default:
