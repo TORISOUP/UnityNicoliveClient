@@ -1,7 +1,7 @@
 # UnityNicoliveClient
 
 UnityNicoliveClientはニコニコ生放送の新配信番組をUnityから操作するクライアントです。  
-ユーザ生放送（たぶんチャンネル生放送も）にのみ対応しています。
+新配信のユーザ生放送にのみ対応しています。
 
 UniRxの使用を前提にしています。
 
@@ -14,6 +14,7 @@ UniRxの使用を前提にしています。
  * 運営コメント投稿/削除
  * BSPコメント投稿
  * 番組情報取得
+ * コメント取得
 
 # 使い方
 
@@ -51,13 +52,73 @@ IEnumerator LoginCoroutine()
 }
 ```
 
-## 現在放送中の番組取得
+## 操作する番組の設定
+
+`SetNicoliveProgramId()`を実行する。これを実行しないとApiClientは動作しない。
+
+```cs
+client.SetNicoliveProgramId("lv123456");
+```
+
+## 自分が今放送している番組のID取得
+
+`GetCurrentNicoliveProgramIdAsync()` で取得可能。ただし放送していない状態でも予約番組があるとそのIDが返される。
 
 ```cs
 //現在放送中の番組ID取得
 client.GetCurrentNicoliveProgramIdAsync()
     .Subscribe(lv => Debug.Log(lv));
 ```
+
+## 番組の詳細情報取得
+
+`GetProgramInfoAsync` で取得可能
+
+```cs
+var programInfo = default(ProgramInfo);
+client.GetProgramInfoAsync().Subscribe(x => programInfo = x);
+```
+
+## コメントを取得する
+
+1. `GetProgramInfoAsync` で番組情報(`ProgramInfo`)を取得する
+2. `ProgramInfo`の中の`Room`を使って`NicoliveCommentClient`を初期化する
+3. `NicoliveCommentClient.OnMessageAsObservable()` を購読してコメントを受け取る
+4. `NicoliveCommentClient.Connect()` でコメントサーバに接続
+5. `NicoliveCommentClient.Disconnect()` で一時切断
+6. `NicoliveCommentClient.Dispose()` で破棄
+
+**使い終わったら必ずDispose()を実行すること！**
+
+```cs
+IEnumerator CommentCoroutine(NiconicoUser user,NicoliveApiClient apiClient)
+{
+    //番組情報取得
+    var pi = apiClient.GetProgramInfoAsync().ToYieldInstruction();
+    yield return pi;
+
+    // 番組の部屋一覧
+    // 自分が放送する番組の場合は全部屋取得できる
+    // 他人の放送の場合は「座席を取得済み」の場合のみ、その座席のある部屋の情報が1つ取得できる
+    var rooms = pi.Result.Rooms;
+
+    //先頭の部屋に接続するコメントクライアントを作成
+    var commentClient = new NicoliveCommentClient(rooms.First(), user.UserId);
+
+    //コメント購読設定
+    commentClient.OnMessageAsObservable.Subscribe(x => Debug.Log(x.Content));
+
+    //クライアント接続
+    commentClient.Connect(resFrom: 0);
+
+    yield return new WaitForSeconds(10);
+
+    //おかたづけ
+    commentClient.Disconnect();
+    commentClient.Dispose();
+}
+```
+
 
 ## エラーハンドリング
 
@@ -86,3 +147,6 @@ MITライセンス
 
 UniRx
 Copyright (c) 2014 Yoshifumi Kawai https://github.com/neuecc/UniRx/blob/master/LICENSE
+
+websocket-sharp
+Copyright (c) 2010-2018 sta.blockhead https://github.com/sta/websocket-sharp/blob/master/LICENSE.txt
