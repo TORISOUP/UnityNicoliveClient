@@ -9,10 +9,29 @@ namespace NicoliveClient.Example
         [SerializeField] private GameObject _loginPanel;
         [SerializeField] private GameObject _mainPanel;
 
-        private NicoliveApiClient _nicoliveApiClient;
         public NicoliveApiClient NicoliveApiClient { get { return _nicoliveApiClient; } }
 
+        /// <summary>
+        /// 現在の部屋情報
+        /// </summary>
+        public ReactiveDictionary<int, Room> CurrentRooms
+        {
+            get { return _currentRooms; }
+        }
+
+        /// <summary>
+        /// 現在のユーザ情報
+        /// </summary>
+        public NiconicoUser CurrentUser
+        {
+            get { return _loginManager.CurrentUser; }
+        }
+
+        private ReactiveDictionary<int, Room> _currentRooms = new ReactiveDictionary<int, Room>();
+        private NicoliveApiClient _nicoliveApiClient;
         private StringReactiveProperty _currentProgramId = new StringReactiveProperty("");
+
+
 
         /// <summary>
         /// 現在の対象番組ID
@@ -68,6 +87,7 @@ namespace NicoliveClient.Example
         /// </summary>
         public void SetTargetProgramId(string programId)
         {
+            _currentRooms.Clear();
             _currentProgramId.Value = programId;
         }
 

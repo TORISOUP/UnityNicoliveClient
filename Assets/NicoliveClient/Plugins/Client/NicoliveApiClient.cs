@@ -345,6 +345,7 @@ namespace NicoliveClient
                 }
 
                 var json = www.downloadHandler.text;
+
                 var dto = JsonUtility.FromJson<ApiResponseDto<ProgramInfoDto>>(json);
                 var programInfo = dto.data.ToProgramInfo();
 

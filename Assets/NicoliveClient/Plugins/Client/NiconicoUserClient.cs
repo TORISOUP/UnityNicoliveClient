@@ -38,13 +38,15 @@ namespace NicoliveClient
                 www.redirectLimit = 0;
                 yield return www.SendWebRequest();
 
+                var c = www.GetResponseHeaders();
                 var cookie = www.GetResponseHeader("Set-Cookie");
                 var match = userSessionRegex.Match(cookie);
 
                 if (match.Success)
                 {
                     var userSession = "user_session_" + match.Groups[1];
-                    observer.OnNext(new NiconicoUser(userSession));
+                    var userId = match.Groups[1].ToString().Split('_')[0];
+                    observer.OnNext(new NiconicoUser(userId, userSession));
                     observer.OnCompleted();
                 }
                 else
