@@ -20,13 +20,14 @@ namespace NicoliveClient.Example
             _commentPanelManager.OnCommentRecieved
                 .Subscribe(message =>
                 {
+
                     //最後尾のPanelを持ってくる
-                    var last = _renderAreaParent.GetChild(renderPanelCount);
+                    var last = _renderAreaParent.GetChild(renderPanelCount - 1);
 
                     //Textを取得
                     var text = last.GetComponentInChildren<Text>();
 
-                    text.text = message;
+                    text.text = message.Content;
 
                     //描画したパネルを先頭に持ってくる
                     last.SetSiblingIndex(0);

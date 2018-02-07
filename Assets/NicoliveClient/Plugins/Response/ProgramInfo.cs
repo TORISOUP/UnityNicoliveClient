@@ -37,9 +37,9 @@ namespace NicoliveClient
         public bool IsMemberOnly { get; private set; }
 
         /// <summary>
-        /// テスト放送時間を含む番組開始時刻
+        /// コメントのVpos値の基準時刻
         /// </summary>
-        public long OpenAt { get; private set; }
+        public long VposBaseAt { get; private set; }
 
         /// <summary>
         /// テスト放送を含まない本番放送開始時刻
@@ -63,7 +63,7 @@ namespace NicoliveClient
             string title,
             string description,
             bool isMemberOnly,
-            long openAt,
+            long vposBaseAt,
             long beginAt,
             long endAt,
             string[] categories) : this()
@@ -89,7 +89,7 @@ namespace NicoliveClient
             Title = title;
             Description = description;
             IsMemberOnly = isMemberOnly;
-            OpenAt = openAt;
+            VposBaseAt = vposBaseAt;
             BeginAt = beginAt;
             EndAt = endAt;
             Categories = categories;
@@ -142,13 +142,25 @@ namespace NicoliveClient
         /// <summary>
         /// コメントサーバのURI（WebSocket）
         /// </summary>
-        public Uri Uri { get; private set; }
+        public Uri WebSocketUri { get; private set; }
 
-        public Room(string name, int id, string uri) : this()
+        /// <summary>
+        /// コメントサーバのURI（XmlSocket）
+        /// </summary>
+        public Uri XmlSocketUri { get; private set; }
+
+        /// <summary>
+        /// スレッドID
+        /// </summary>
+        public string ThreadId { get; private set; }
+
+        public Room(string name, int id, string webSocketUri, string xmlSocketUri,string threadId) : this()
         {
             Name = name;
             Id = id;
-            Uri = new Uri(uri);
+            WebSocketUri = new Uri(webSocketUri);
+            XmlSocketUri = new Uri(xmlSocketUri);
+            ThreadId = threadId;
         }
     }
 
@@ -176,7 +188,7 @@ namespace NicoliveClient
         public string title;
         public string description;
         public bool isMemberOnly;
-        public long openAt;
+        public long vposBaseAt;
         public long beginAt;
         public long endAt;
         public string[] categories;
@@ -191,7 +203,7 @@ namespace NicoliveClient
                 title,
                 description,
                 isMemberOnly,
-                openAt,
+                vposBaseAt,
                 beginAt,
                 endAt,
                 categories
@@ -218,11 +230,13 @@ namespace NicoliveClient
     {
         public string name;
         public int id;
-        public string uri;
+        public string webSocketUri;
+        public string xmlSocketUri;
+        public string threadId;
 
         public Room ToRoom()
         {
-            return new Room(name, id, uri);
+            return new Room(name, id, webSocketUri, xmlSocketUri, threadId);
         }
     }
 

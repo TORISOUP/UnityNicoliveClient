@@ -18,6 +18,15 @@ namespace NicoliveClient.Example
         {
             get { return _currentRooms; }
         }
+
+        /// <summary>
+        /// 現在のユーザ情報
+        /// </summary>
+        public NiconicoUser CurrentUser
+        {
+            get { return _loginManager.CurrentUser; }
+        }
+
         private ReactiveDictionary<int, Room> _currentRooms = new ReactiveDictionary<int, Room>();
         private NicoliveApiClient _nicoliveApiClient;
         private StringReactiveProperty _currentProgramId = new StringReactiveProperty("");
@@ -78,6 +87,7 @@ namespace NicoliveClient.Example
         /// </summary>
         public void SetTargetProgramId(string programId)
         {
+            _currentRooms.Clear();
             _currentProgramId.Value = programId;
         }
 
