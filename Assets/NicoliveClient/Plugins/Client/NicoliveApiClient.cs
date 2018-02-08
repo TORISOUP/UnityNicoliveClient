@@ -27,13 +27,24 @@ namespace NicoliveClient
         /// </summary>
         private string _pgProgramId;
 
+        private string _userAgent = "UnityNicoliveClient";
+
         #region Setup
 
+        /// <summary>
+        /// NicoliveApiClientを初期化する
+        /// </summary>
+        /// <param name="niconicoUser">ユーザ情報</param>
         public NicoliveApiClient(NiconicoUser niconicoUser)
         {
             _niconicoUser = niconicoUser;
         }
 
+        /// <summary>
+        /// NicoliveApiClientを初期化する
+        /// </summary>
+        /// <param name="niconicoUser">ユーザ情報</param>
+        /// <param name="nicoliveProgramId">操作対象の番組ID(lv)</param>
         public NicoliveApiClient(NiconicoUser niconicoUser, string nicoliveProgramId)
         {
             _niconicoUser = niconicoUser;
@@ -47,6 +58,14 @@ namespace NicoliveClient
         {
             if (NicoliveProgramId != id) _pgProgramId = null;
             NicoliveProgramId = id;
+        }
+
+        /// <summary>
+        /// UserAgentを設定する
+        /// </summary>
+        public void SetCustomUserAgent(string userAgent)
+        {
+            _userAgent = userAgent;
         }
 
         #endregion
@@ -69,7 +88,7 @@ namespace NicoliveClient
             using (var www = UnityWebRequest.Get(url))
             {
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
-
+                www.SetRequestHeader("User-Agent", _userAgent);
                 yield return www.SendWebRequest();
 
                 var result = www.downloadHandler.text;
@@ -120,6 +139,7 @@ namespace NicoliveClient
             {
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -147,6 +167,7 @@ namespace NicoliveClient
             using (var www = UnityWebRequest.Delete(url))
             {
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -192,6 +213,7 @@ namespace NicoliveClient
                 www.uploadHandler = new UploadHandlerRaw(data);
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -237,6 +259,7 @@ namespace NicoliveClient
             {
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -270,6 +293,7 @@ namespace NicoliveClient
             {
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -306,6 +330,7 @@ namespace NicoliveClient
                 www.uploadHandler = new UploadHandlerRaw(data);
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -341,6 +366,7 @@ namespace NicoliveClient
             {
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
 
@@ -409,6 +435,7 @@ namespace NicoliveClient
                 www.uploadHandler = new UploadHandlerRaw(data);
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -452,6 +479,7 @@ namespace NicoliveClient
                 www.uploadHandler = new UploadHandlerRaw(data);
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -500,6 +528,7 @@ namespace NicoliveClient
                 www.uploadHandler = new UploadHandlerRaw(data);
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
                 if (www.isHttpError)
@@ -532,6 +561,7 @@ namespace NicoliveClient
             using (var www = UnityWebRequest.Get(url))
             {
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
 
                 yield return www.SendWebRequest();
 
