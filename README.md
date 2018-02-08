@@ -15,6 +15,7 @@ UniRxの使用を前提にしています。
  * BSPコメント投稿
  * 番組情報取得
  * コメント取得
+ * アンケートの実行
 
 # 使い方
 
@@ -91,7 +92,7 @@ client.GetProgramInfoAsync().Subscribe(x => programInfo = x);
 **使い終わったら必ずDispose()を実行すること！**
 
 ```cs
-IEnumerator CommentCoroutine(NiconicoUser user,NicoliveApiClient apiClient)
+IEnumerator CommentCoroutine(NiconicoUser user, NicoliveApiClient apiClient)
 {
     //番組情報取得
     var pi = apiClient.GetProgramInfoAsync().ToYieldInstruction();
@@ -116,6 +117,45 @@ IEnumerator CommentCoroutine(NiconicoUser user,NicoliveApiClient apiClient)
     //おかたづけ
     commentClient.Disconnect();
     commentClient.Dispose();
+}
+```
+
+## アンケート
+
+```cs
+IEnumerator EnqueteCoroutine(NicoliveApiClient client)
+{
+    var title = "どれが好き？";
+    var questions = new string[] { "き○この山", "た○のこの里", "コ○ラのマーチ" };
+
+    //アンケートの実行
+    client.StartEnqueteAsync(title, questions);
+
+
+    //回答時間
+    yield return new WaitForSeconds(10);
+
+
+    //結果表示
+    var ri = client.ShowResultEnqueteAsync().ToYieldInstruction();
+    yield return ri; //APIの結果待ち
+    var enqueteResult = ri.Result;
+
+    //結果表示
+    Debug.Log(enqueteResult.Title);
+    foreach (var i in enqueteResult.Items)
+    {
+        //各要素の回答率
+        Debug.Log(string.Format("{0}:{1}%", i.Name, i.Rate));
+    }
+
+
+    //結果表示待機
+    yield return new WaitForSeconds(3);
+
+
+    //アンケート終了
+    client.FinishEnqueteAsync();
 }
 ```
 

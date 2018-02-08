@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -21,6 +22,10 @@ namespace NicoliveClient
         /// </summary>
         public string NicoliveProgramId { get; private set; }
 
+        /// <summary>
+        /// pgから始まる方の番組ID
+        /// </summary>
+        private string _pgProgramId;
 
         #region Setup
 
@@ -40,6 +45,7 @@ namespace NicoliveClient
         /// </summary>
         public void SetNicoliveProgramId(string id)
         {
+            if (NicoliveProgramId != id) _pgProgramId = null;
             NicoliveProgramId = id;
         }
 
@@ -355,7 +361,198 @@ namespace NicoliveClient
         }
 
         #endregion
+
+        #region アンケート
+
+        /// <summary>
+        /// アンケートを開始する
+        /// </summary>
+        /// <param name="title">アンケートタイトル</param>
+        /// <param name="questions">設問</param>
+        /// <returns></returns>
+        public IObservable<Unit> StartEnqueteAsync(string title, IEnumerable<string> questions)
+        {
+            var enqueteObservable = Observable.FromCoroutine<Unit>(o => StartEnqueteCoroutine(o, title, questions));
+
+            if (string.IsNullOrEmpty(_pgProgramId))
+            {
+                return GetPgProgramIdAsync()
+                    .Do(pg => _pgProgramId = pg) //pgがない場合は取得する
+                    .SelectMany(_ => enqueteObservable).Kick();
+            }
+
+            return enqueteObservable.Kick();
+        }
+
+        private IEnumerator StartEnqueteCoroutine(IObserver<Unit> observer, string title, IEnumerable<string> questions)
+        {
+            var url = string.Format("http://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete", _pgProgramId);
+
+            var items = questions as string[] ?? questions.ToArray();
+
+            if (items.Length < 2)
+            {
+                observer.OnError(new NicoliveApiClientException("アンケートの実行には回答が2つ以上必要です"));
+                yield break;
+            }
+
+            var json = JsonUtility.ToJson(new EnqueteRequest
+            {
+                programId = _pgProgramId,
+                question = title,
+                items = items
+            });
+
+            using (var www = UnityWebRequest.Post(url, "POST"))
+            {
+                var data = Encoding.UTF8.GetBytes(json);
+                www.uploadHandler = new UploadHandlerRaw(data);
+                www.SetRequestHeader("Content-type", "application/json");
+                www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+
+                yield return www.SendWebRequest();
+                if (www.isHttpError)
+                {
+                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
+                    yield break;
+                }
+                observer.OnNext(Unit.Default);
+                observer.OnCompleted();
+            }
+        }
+
+
+        /// <summary>
+        /// アンケートの結果を表示する
+        /// </summary>
+        /// <returns></returns>
+        public IObservable<EnqueteResult> ShowResultEnqueteAsync()
+        {
+            var enqueteObservable = Observable.FromCoroutine<EnqueteResult>(ShowResultEnqueteCoroutine);
+
+            if (string.IsNullOrEmpty(_pgProgramId))
+            {
+                return GetPgProgramIdAsync()
+                    .Do(pg => _pgProgramId = pg) //pgがない場合は取得する
+                    .SelectMany(_ => enqueteObservable).Kick();
+            }
+
+            return enqueteObservable.Kick();
+        }
+
+        private IEnumerator ShowResultEnqueteCoroutine(IObserver<EnqueteResult> observer)
+        {
+            var url = string.Format("http://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete/show_result", _pgProgramId);
+
+            var json = "{ \"programId\":" + _pgProgramId + " }";
+
+            using (var www = UnityWebRequest.Post(url, "POST"))
+            {
+                var data = Encoding.UTF8.GetBytes(json);
+                www.uploadHandler = new UploadHandlerRaw(data);
+                www.SetRequestHeader("Content-type", "application/json");
+                www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+
+                yield return www.SendWebRequest();
+                if (www.isHttpError)
+                {
+                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
+                    yield break;
+                }
+
+                var result = www.downloadHandler.text;
+                var dto = JsonUtility.FromJson<ApiResponseDto<EnqueteResultDto>>(result);
+
+                observer.OnNext(dto.data.ToEnqueteResult());
+                observer.OnCompleted();
+            }
+        }
+
+
+
+        /// <summary>
+        /// アンケートの結果を表示する
+        /// </summary>
+        /// <returns></returns>
+        public IObservable<Unit> FinishEnqueteAsync()
+        {
+            var enqueteObservable = Observable.FromCoroutine<Unit>(FinishEnqueteCoroutine);
+
+            if (string.IsNullOrEmpty(_pgProgramId))
+            {
+                return GetPgProgramIdAsync()
+                    .Do(pg => _pgProgramId = pg) //pgがない場合は取得する
+                    .SelectMany(_ => enqueteObservable).Kick();
+            }
+
+            return enqueteObservable.Kick();
+        }
+
+        private IEnumerator FinishEnqueteCoroutine(IObserver<Unit> observer)
+        {
+            var url = string.Format("http://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete/end", _pgProgramId);
+
+            var json = "{ \"programId\":" + _pgProgramId + " }";
+
+            using (var www = UnityWebRequest.Post(url, "POST"))
+            {
+                var data = Encoding.UTF8.GetBytes(json);
+                www.uploadHandler = new UploadHandlerRaw(data);
+                www.SetRequestHeader("Content-type", "application/json");
+                www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+
+                yield return www.SendWebRequest();
+                if (www.isHttpError)
+                {
+                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
+                    yield break;
+                }
+
+                observer.OnNext(Unit.Default);
+                observer.OnCompleted();
+            }
+        }
+
+        #endregion
+
+        #region pg取得
+
+        /// <summary>
+        /// pgから始まる方の番組IDを取得する
+        /// </summary>
+        public IObservable<string> GetPgProgramIdAsync()
+        {
+            return Observable.FromCoroutine<string>(GetPgProgramIdCoroutine).Kick();
+        }
+
+        private IEnumerator GetPgProgramIdCoroutine(IObserver<string> observer)
+        {
+            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/player", NicoliveProgramId);
+
+            using (var www = UnityWebRequest.Get(url))
+            {
+                www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+
+                yield return www.SendWebRequest();
+
+                if (www.isHttpError)
+                {
+                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
+                    yield break;
+                }
+
+                var json = www.downloadHandler.text;
+                var programId = Regex.Match(json, "programId\":\"(.*?)\"").Groups[1].Value;
+                observer.OnNext(programId);
+                observer.OnCompleted();
+            }
+        }
+
+        #endregion
+
+
     }
+
 
     public class NicoliveApiClientException : Exception
     {

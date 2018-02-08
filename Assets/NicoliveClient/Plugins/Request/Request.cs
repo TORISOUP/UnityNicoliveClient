@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace NicoliveClient
 {
@@ -20,6 +17,14 @@ namespace NicoliveClient
         public string text;
         public string userName;
         public string color;
+    }
+
+    [Serializable]
+    internal struct EnqueteRequest
+    {
+        public string programId;
+        public string question;
+        public string[] items;
     }
 }
 
