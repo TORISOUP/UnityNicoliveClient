@@ -61,6 +61,15 @@ IEnumerator LoginCoroutine()
 client.SetNicoliveProgramId("lv123456");
 ```
 
+## UserAgentを設定する（推奨）
+
+デフォルトでは`UnityNicoliveClient`がUAに設定されています。
+変更したい場合は`SetCustomUserAgent`から設定可能（できるだけ自身のアプリ名を設定してください）
+
+```cs
+client.SetCustomUserAgent("YourApplicationNameHere");
+```
+
 ## 自分が今放送している番組のID取得
 
 `GetCurrentNicoliveProgramIdAsync()` で取得可能。ただし放送していない状態でも予約番組があるとそのIDが返される。
