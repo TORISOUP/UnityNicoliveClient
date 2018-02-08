@@ -77,6 +77,9 @@ namespace NicoliveClient
                 case "onAir":
                     s = ProgramStatus.OnAir;
                     break;
+                case "reserved":
+                    s = ProgramStatus.Reserved;
+                    break;
                 default:
                 case "ended":
                     s = ProgramStatus.Ended;
@@ -168,7 +171,8 @@ namespace NicoliveClient
     {
         Test,
         OnAir,
-        Ended
+        Ended,
+        Reserved
     }
 
     public enum SocialGroupType
