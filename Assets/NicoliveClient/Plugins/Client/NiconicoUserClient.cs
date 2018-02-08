@@ -37,8 +37,6 @@ namespace NicoliveClient
             {
                 www.redirectLimit = 0;
                 yield return www.SendWebRequest();
-
-                var c = www.GetResponseHeaders();
                 var cookie = www.GetResponseHeader("Set-Cookie");
                 var match = userSessionRegex.Match(cookie);
 
