@@ -52,7 +52,7 @@ namespace NicoliveClient
         public long EndAt { get; private set; }
 
         /// <summary>
-        /// タグ
+        /// カテゴリタグ
         /// </summary>
         public string[] Categories { get; private set; }
 
