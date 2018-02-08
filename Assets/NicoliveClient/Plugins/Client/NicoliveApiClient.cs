@@ -378,7 +378,7 @@ namespace NicoliveClient
             {
                 return GetPgProgramIdAsync()
                     .Do(pg => _pgProgramId = pg) //pgがない場合は取得する
-                    .SelectMany(_ => enqueteObservable).FirstOrDefault().Kick();
+                    .SelectMany(_ => enqueteObservable).Kick();
             }
 
             return enqueteObservable.Kick();
@@ -434,7 +434,7 @@ namespace NicoliveClient
             {
                 return GetPgProgramIdAsync()
                     .Do(pg => _pgProgramId = pg) //pgがない場合は取得する
-                    .SelectMany(_ => enqueteObservable).FirstOrDefault().Kick();
+                    .SelectMany(_ => enqueteObservable).Kick();
             }
 
             return enqueteObservable.Kick();
@@ -482,7 +482,7 @@ namespace NicoliveClient
             {
                 return GetPgProgramIdAsync()
                     .Do(pg => _pgProgramId = pg) //pgがない場合は取得する
-                    .SelectMany(_ => enqueteObservable).FirstOrDefault().Kick();
+                    .SelectMany(_ => enqueteObservable).Kick();
             }
 
             return enqueteObservable.Kick();
