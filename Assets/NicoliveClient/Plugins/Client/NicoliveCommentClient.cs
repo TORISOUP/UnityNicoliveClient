@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using Assets.NicoliveClient.Plugins.Comment;
-using NicoliveClient;
 using UniRx;
 using UnityEngine;
 using WebSocketSharp;

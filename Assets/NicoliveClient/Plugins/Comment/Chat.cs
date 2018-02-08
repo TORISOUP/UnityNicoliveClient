@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Assets.NicoliveClient.Plugins.Comment
+namespace NicoliveClient
 {
     /// <summary>
     /// コメントブジェクト
