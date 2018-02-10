@@ -36,7 +36,13 @@ namespace NicoliveClient
             using (var www = UnityWebRequest.Post(url, form))
             {
                 www.redirectLimit = 0;
+
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 var cookie = www.GetResponseHeader("Set-Cookie");
                 var match = userSessionRegex.Match(cookie);
 

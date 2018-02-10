@@ -89,7 +89,12 @@ namespace NicoliveClient
             {
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
+
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
 
                 var result = www.downloadHandler.text;
 
@@ -141,7 +146,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -169,7 +179,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -215,7 +230,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -261,7 +281,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -294,8 +319,11 @@ namespace NicoliveClient
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
-
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -332,7 +360,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -368,7 +401,11 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
 
                 if (www.isHttpError)
                 {
@@ -437,7 +474,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -481,7 +523,12 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -529,8 +576,13 @@ namespace NicoliveClient
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
-
+                
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
                 if (www.isHttpError)
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
@@ -563,7 +615,11 @@ namespace NicoliveClient
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
+#if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
 
                 if (www.isHttpError)
                 {
