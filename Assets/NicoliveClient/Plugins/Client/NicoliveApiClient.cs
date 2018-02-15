@@ -152,11 +152,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -189,11 +185,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -203,9 +195,9 @@ namespace NicoliveClient
             }
         }
 
-#endregion
+        #endregion
 
-#region BSPコメント
+        #region BSPコメント
 
         /// <summary>
         /// BSPコメントを投稿する
@@ -244,11 +236,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -258,9 +246,9 @@ namespace NicoliveClient
             }
         }
 
-#endregion
+        #endregion
 
-#region 番組開始/終了
+        #region 番組開始/終了
 
         /// <summary>
         /// 番組を開始する
@@ -299,29 +287,20 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
-#if UNITY_2017_2_OR_NEWER
                 observer.OnNext(!www.isHttpError);
-#else
-                observer.OnNext(!www.isError);
-#endif
-
                 observer.OnCompleted();
             }
         }
 
 
-#endregion
+        #endregion
 
-#region 番組延長
+        #region 番組延長
         /// <summary>
         /// 延長手段を取得する
         /// </summary>
@@ -345,11 +324,7 @@ namespace NicoliveClient
 #else
                 yield return www.Send();
 #endif
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -391,11 +366,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -408,9 +379,9 @@ namespace NicoliveClient
             }
         }
 
-#endregion
+        #endregion
 
-#region 番組情報取得
+        #region 番組情報取得
 
         /// <summary>
         /// 番組情報を取得する
@@ -436,11 +407,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -456,9 +423,9 @@ namespace NicoliveClient
             }
         }
 
-#endregion
+        #endregion
 
-#region アンケート
+        #region アンケート
 
         /// <summary>
         /// アンケートを開始する
@@ -513,11 +480,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -566,11 +529,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -624,11 +583,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -639,9 +594,9 @@ namespace NicoliveClient
             }
         }
 
-#endregion
+        #endregion
 
-#region pg取得
+        #region pg取得
 
         /// <summary>
         /// pgから始まる方の番組IDを取得する
@@ -666,11 +621,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-#if UNITY_2017_2_OR_NEWER
                 if (www.isHttpError)
-#else
-                if (www.isError)
-#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -683,7 +634,7 @@ namespace NicoliveClient
             }
         }
 
-#endregion
+        #endregion
 
 
     }
