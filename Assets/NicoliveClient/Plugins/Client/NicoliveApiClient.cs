@@ -152,7 +152,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -185,7 +189,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -236,7 +244,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -287,12 +299,21 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
+#if UNITY_2017_1_OR_NEWER
                 observer.OnNext(!www.isHttpError);
+#else
+                observer.OnNext(!www.isError);
+#endif
+
                 observer.OnCompleted();
             }
         }
@@ -324,7 +345,11 @@ namespace NicoliveClient
 #else
                 yield return www.Send();
 #endif
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -366,7 +391,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -407,7 +436,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -480,7 +513,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -529,7 +566,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -583,7 +624,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
@@ -621,7 +666,11 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
+#if UNITY_2017_1_OR_NEWER
                 if (www.isHttpError)
+#else
+                if (www.isError)
+#endif
                 {
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
