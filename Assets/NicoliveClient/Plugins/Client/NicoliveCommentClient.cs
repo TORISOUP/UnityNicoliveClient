@@ -70,12 +70,12 @@ namespace NicoliveClient
 
             _disposedEventAsyncSubject = new AsyncSubject<Unit>();
             _onMessageAsObservable =
-                Observable.FromEventPattern<EventHandler<MessageEventArgs>, MessageEventArgs>(
-                    h => h.Invoke,
-                    h => _ws.OnMessage += h,
-                    h => _ws.OnMessage -= h)
+                Observable.FromEvent<EventHandler<MessageEventArgs>, MessageEventArgs>(
+                        h => (sender, e) => h(e),
+                        h => _ws.OnMessage += h,
+                        h => _ws.OnMessage -= h)
                     .ObserveOn(Scheduler.ThreadPool) //Jsonのパース処理をThreadPoolで行う
-                    .Select(x => JsonUtility.FromJson<CommentDto>(x.EventArgs.Data))
+                    .Select(x => JsonUtility.FromJson<CommentDto>(x.Data))
                     .Where(x => x.chat.IsSuccess())
                     .Select(x => x.chat.ToChat(RoomId))
                     .TakeUntil(_disposedEventAsyncSubject)
