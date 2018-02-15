@@ -153,7 +153,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -190,7 +190,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -245,7 +245,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -266,21 +266,21 @@ namespace NicoliveClient
         /// 番組を開始する
         /// </summary>
         /// <returns></returns>
-        public IObservable<bool> StartProgramAsync()
+        public IObservable<Unit> StartProgramAsync()
         {
-            return Observable.FromCoroutine<bool>(o => SegmentCoroutine(o, "on_air")).Kick();
+            return Observable.FromCoroutine<Unit>(o => SegmentCoroutine(o, "on_air")).Kick();
         }
 
         /// <summary>
         /// 番組を終了する
         /// </summary>
         /// <returns></returns>
-        public IObservable<bool> EndProgramAsync()
+        public IObservable<Unit> EndProgramAsync()
         {
-            return Observable.FromCoroutine<bool>(o => SegmentCoroutine(o, "end")).Kick();
+            return Observable.FromCoroutine<Unit>(o => SegmentCoroutine(o, "end")).Kick();
         }
 
-        private IEnumerator SegmentCoroutine(IObserver<bool> observer, string state)
+        private IEnumerator SegmentCoroutine(IObserver<Unit> observer, string state)
         {
             var url = string.Format("http://live2.nicovideo.jp/watch/{0}/segment", NicoliveProgramId);
 
@@ -300,7 +300,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -308,11 +308,9 @@ namespace NicoliveClient
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
-#if UNITY_2017_1_OR_NEWER
-                observer.OnNext(!www.isHttpError);
-#else
-                observer.OnNext(!www.isError);
-#endif
+
+                observer.OnNext(Unit.Default);
+
 
                 observer.OnCompleted();
             }
@@ -346,7 +344,7 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -392,7 +390,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -437,7 +435,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -514,7 +512,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -567,7 +565,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -617,7 +615,7 @@ namespace NicoliveClient
                 www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
-                
+
 #if UNITY_2017_2_OR_NEWER
                 yield return www.SendWebRequest();
 #else
@@ -625,7 +623,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
@@ -667,7 +665,7 @@ namespace NicoliveClient
 #endif
 
 #if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError)
+                if (www.isHttpError || www.isNetworkError)
 #else
                 if (www.isError)
 #endif
