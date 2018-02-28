@@ -456,6 +456,55 @@ namespace NicoliveClient
 
         #endregion
 
+        #region 番組統計情報取得
+
+        /// <summary>
+        /// 番組統計情報を取得する
+        /// </summary>
+        public IObservable<StatisticsResult> GetProgramStatisticsAsync()
+        {
+            return Observable.FromCoroutine<StatisticsResult>(GetProgramStatistics).Kick();
+        }
+
+        private IEnumerator GetProgramStatistics(IObserver<StatisticsResult> observer)
+        {
+            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/statistics", NicoliveProgramId);
+
+            using (var www = UnityWebRequest.Get(url))
+            {
+                www.SetRequestHeader("Content-type", "application/json");
+                www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
+                www.SetRequestHeader("User-Agent", _userAgent);
+
+#if UNITY_2017_2_OR_NEWER
+                yield return www.SendWebRequest();
+#else
+                yield return www.Send();
+#endif
+
+#if UNITY_2017_1_OR_NEWER
+                if (www.isHttpError || www.isNetworkError)
+#else
+                if (www.isError)
+#endif
+                {
+                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
+                    yield break;
+                }
+
+                var json = www.downloadHandler.text;
+
+                var dto = JsonUtility.FromJson<ApiResponseDto<StatisticsResultDto>>(json);
+                var statistics = dto.data.ToStatisticsResult();
+
+                observer.OnNext(statistics);
+                observer.OnCompleted();
+            }
+        }
+
+        #endregion
+
+
         #region アンケート
 
         /// <summary>
