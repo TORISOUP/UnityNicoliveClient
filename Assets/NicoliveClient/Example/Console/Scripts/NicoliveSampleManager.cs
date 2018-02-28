@@ -1,4 +1,5 @@
-﻿using UniRx;
+﻿using System.Text.RegularExpressions;
+using UniRx;
 using UnityEngine;
 
 namespace NicoliveClient.Example
@@ -8,6 +9,9 @@ namespace NicoliveClient.Example
         [SerializeField] private LoginManager _loginManager;
         [SerializeField] private GameObject _loginPanel;
         [SerializeField] private GameObject _mainPanel;
+        [SerializeField] private GameObject _blockPanel;
+
+        private Regex _lvRegex = new Regex(@"^lv\d+$");
 
         public NicoliveApiClient NicoliveApiClient { get { return _nicoliveApiClient; } }
 
@@ -32,13 +36,27 @@ namespace NicoliveClient.Example
         private StringReactiveProperty _currentProgramId = new StringReactiveProperty("");
 
 
-
         /// <summary>
         /// 現在の対象番組ID
         /// </summary>
         public IReadOnlyReactiveProperty<string> CurrentProgramId
         {
             get { return _currentProgramId; }
+        }
+
+        private ReadOnlyReactiveProperty<bool> _isSetProgramId;
+
+        /// <summary>
+        /// 有効な番組IDが設定されているか
+        /// </summary>
+        public IReadOnlyReactiveProperty<bool> IsSetProgramId
+        {
+            get
+            {
+                return _isSetProgramId ??
+                    (_isSetProgramId = CurrentProgramId.Select(x => !string.IsNullOrEmpty(x))
+                           .ToReadOnlyReactiveProperty());
+            }
         }
 
         private void Start()
@@ -64,6 +82,8 @@ namespace NicoliveClient.Example
                 if (_nicoliveApiClient != null) _nicoliveApiClient.SetNicoliveProgramId(x);
             });
 
+            IsSetProgramId
+                .Subscribe(x => _blockPanel.SetActive(!x));
 
         }
 
@@ -88,7 +108,14 @@ namespace NicoliveClient.Example
         public void SetTargetProgramId(string programId)
         {
             _currentRooms.Clear();
-            _currentProgramId.Value = programId;
+            if (_lvRegex.IsMatch(programId))
+            {
+                _currentProgramId.Value = programId;
+            }
+            else
+            {
+                Debug.LogError("不正な番組IDです");
+            }
         }
 
     }

@@ -18,9 +18,13 @@ namespace NicoliveClient.Example
 
         void Start()
         {
+            var command = _manager.IsSetProgramId.ToReactiveCommand();
+
             _getButton.OnClickAsObservable()
                 .ThrottleFirst(TimeSpan.FromSeconds(5))
-                .Subscribe(_ =>
+                .Subscribe(_ => command.Execute());
+
+            command.Subscribe(_ =>
                 {
                     _manager.NicoliveApiClient.GetProgramStatisticsAsync()
                         .Subscribe(result =>
