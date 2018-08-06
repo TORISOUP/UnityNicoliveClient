@@ -56,6 +56,16 @@ namespace NicoliveClient
         /// </summary>
         public string[] Categories { get; private set; }
 
+        /// <summary>
+        /// ニコニ広告を許可しているか
+        /// </summary>
+        public bool IsAdsEnabled { get; private set; }
+
+        /// <summary>
+        /// 配信者情報
+        /// </summary>
+        public Broadcaster Broadcaster { get; private set; }
+
         public ProgramInfo(
             SocialGroup socialGroup,
             Room[] rooms,
@@ -66,7 +76,10 @@ namespace NicoliveClient
             long vposBaseAt,
             long beginAt,
             long endAt,
-            string[] categories) : this()
+            string[] categories,
+            bool isAdsEnabled,
+            Broadcaster broadcaster
+        ) : this()
         {
             ProgramStatus s;
             switch (status)
@@ -96,6 +109,8 @@ namespace NicoliveClient
             BeginAt = beginAt;
             EndAt = endAt;
             Categories = categories;
+            IsAdsEnabled = isAdsEnabled;
+            Broadcaster = broadcaster;
         }
     }
 
@@ -119,11 +134,24 @@ namespace NicoliveClient
         /// </summary>
         public SocialGroupType Type { get; private set; }
 
-        public SocialGroup(string name, string id, string type) : this()
+        /// <summary>
+        /// チャンネル番組時：チャンネルの配信会社名
+        /// コミュニテイ番組時：null
+        /// </summary>
+        public string OwnerName { get; private set; }
+
+        /// <summary>
+        /// コミュニテイレベル（コミュニテイ番組の場合のみ有効な数値が入る）
+        /// </summary>
+        public int CommunityLevel { get; private set; }
+
+        public SocialGroup(string name, string id, string type, string ownerName, int level) : this()
         {
             Name = name;
             Id = id;
             Type = type == "community" ? SocialGroupType.Community : SocialGroupType.Channel;
+            OwnerName = ownerName;
+            CommunityLevel = level;
         }
     }
 
@@ -157,13 +185,35 @@ namespace NicoliveClient
         /// </summary>
         public string ThreadId { get; private set; }
 
-        public Room(string name, int id, string webSocketUri, string xmlSocketUri,string threadId) : this()
+        public Room(string name, int id, string webSocketUri, string xmlSocketUri, string threadId) : this()
         {
             Name = name;
             Id = id;
             WebSocketUri = new Uri(webSocketUri);
             XmlSocketUri = new Uri(xmlSocketUri);
             ThreadId = threadId;
+        }
+    }
+
+    /// <summary>
+    /// 配信者情報
+    /// </summary>
+    public struct Broadcaster
+    {
+        /// <summary>
+        /// 配信者のユーザID / チャンネルの場合はチャンネルID
+        /// </summary>
+        public int Id { get; private set; }
+
+        /// <summary>
+        /// 配信者名
+        /// </summary>
+        public string Name { get; private set; }
+
+        public Broadcaster(int id, string name) : this()
+        {
+            Id = id;
+            Name = name;
         }
     }
 
@@ -196,10 +246,11 @@ namespace NicoliveClient
         public long beginAt;
         public long endAt;
         public string[] categories;
+        public bool isAdsEnabled;
+        public BroadcasterDto broadcaster;
 
         public ProgramInfo ToProgramInfo()
         {
-
             return new ProgramInfo(
                 socialGroup.ToSocialGroup(),
                 rooms.Select(x => x.ToRoom()).ToArray(),
@@ -210,9 +261,10 @@ namespace NicoliveClient
                 vposBaseAt,
                 beginAt,
                 endAt,
-                categories
-                );
-
+                categories,
+                isAdsEnabled,
+                broadcaster.ToBroadcaster()
+            );
         }
     }
 
@@ -222,10 +274,12 @@ namespace NicoliveClient
         public string name;
         public string id;
         public string type;
+        public string ownerName;
+        public int communityLevel;
 
         public SocialGroup ToSocialGroup()
         {
-            return new SocialGroup(name, id, type);
+            return new SocialGroup(name, id, type, ownerName, communityLevel);
         }
     }
 
@@ -244,6 +298,17 @@ namespace NicoliveClient
         }
     }
 
-    #endregion
+    [Serializable]
+    internal struct BroadcasterDto
+    {
+        public int id;
+        public string name;
 
+        public Broadcaster ToBroadcaster()
+        {
+            return new Broadcaster(id, name);
+        }
+    }
+
+    #endregion
 }
