@@ -400,8 +400,8 @@ namespace NicoliveClient
                 }
 
                 var json = www.downloadHandler.text;
-                var extendDto = JsonUtility.FromJson<ExtendDto>(json);
-                observer.OnNext(new ExtendResult(extendDto.end_time));
+                var extendDto = JsonUtility.FromJson<ApiResponseDto<ExtendDto>>(json);
+                observer.OnNext(new ExtendResult(extendDto.data.end_time));
                 observer.OnCompleted();
             }
         }
