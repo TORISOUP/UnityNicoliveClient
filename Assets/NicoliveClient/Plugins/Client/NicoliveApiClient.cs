@@ -76,17 +76,56 @@ namespace NicoliveClient
         /// <summary>
         /// 現在放送中の番組IDを取得する
         /// </summary>
+        [Obsolete("放送中のコミュニティ番組IDを取得する場合はGetCurrentCommunityProgramIdAsync()を利用して下さい")]
         public IObservable<string> GetCurrentNicoliveProgramIdAsync()
         {
-            return Observable.FromCoroutine<string>(GetPlayerStatusCoroutine).Kick();
+            return GetCurrentCommunityProgramIdAsync();
+        }
+        
+        /// <summary>
+        /// 現在放送中(テスト中含む)のコミュニティ番組の番組IDを取得する。
+        /// 更新頻度が遅めのAPIなので、数分待たないと最新情報が取得できない場合がある。
+        /// チャンネル番組の放送中IDを取得する場合はGetScheduledProgramListAsync()を使うこと。
+        /// </summary>
+        public IObservable<string> GetCurrentCommunityProgramIdAsync()
+        {
+            return Observable.FromCoroutine<ProgramSchedule[]>(GetScheduledProgramListCoroutine)
+                .Select(schedules =>
+                {
+                    foreach (var schedule in schedules)
+                    {
+                        if (
+                            schedule.SocialGroupType == SocialGroupType.Community &&
+                            (schedule.Status == ProgramStatus.Test || schedule.Status == ProgramStatus.OnAir))
+                        {
+                            return schedule.ProgramId;
+                        }
+                    }
+
+                    throw new NicoliveApiClientException("現在放送中の番組はありません");
+                }).Kick();
         }
 
-        private IEnumerator GetPlayerStatusCoroutine(IObserver<string> observer)
+        #endregion
+
+        #region 放送予定番組一覧取得
+
+        /// <summary>
+        /// 放送予定、現在放送中の番組一覧を取得する
+        /// （更新頻度が遅めのAPIなので、数分待たないと最新値が取得できない場合がある）
+        /// </summary>
+        public IObservable<ProgramSchedule[]> GetScheduledProgramListAsync()
         {
-            var url = "http://live.nicovideo.jp/api/getpublishstatus";
+            return Observable.FromCoroutine<ProgramSchedule[]>(GetScheduledProgramListCoroutine).Kick();
+        }
+
+        private IEnumerator GetScheduledProgramListCoroutine(IObserver<ProgramSchedule[]> observer)
+        {
+            var url = "http://live2.nicovideo.jp/unama/tool/v1/program_schedules";
 
             using (var www = UnityWebRequest.Get(url))
             {
+                www.SetRequestHeader("Content-type", "application/json");
                 www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
                 www.SetRequestHeader("User-Agent", _userAgent);
 
@@ -96,18 +135,23 @@ namespace NicoliveClient
                 yield return www.Send();
 #endif
 
-                var result = www.downloadHandler.text;
+#if UNITY_2017_1_OR_NEWER
+                if (www.isHttpError || www.isNetworkError)
+#else
+                if (www.isError)
+#endif
+                {
+                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
+                    yield break;
+                }
 
-                var match = _lvRegex.Match(result);
-                if (match.Success)
-                {
-                    observer.OnNext(match.Value);
-                    observer.OnCompleted();
-                }
-                else
-                {
-                    observer.OnError(new NicoliveApiClientException("番組IDの取得に失敗しました"));
-                }
+                var json = www.downloadHandler.text;
+
+                var dto = JsonUtility.FromJson<ApiResponseDto<ProgramScheduleDto[]>>(json);
+                var schedules = dto.data.Select(x => x.ToProgramSchedule()).ToArray();
+
+                observer.OnNext(schedules);
+                observer.OnCompleted();
             }
         }
 
@@ -161,6 +205,7 @@ namespace NicoliveClient
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
+
                 observer.OnNext(Unit.Default);
                 observer.OnCompleted();
             }
@@ -198,6 +243,7 @@ namespace NicoliveClient
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
+
                 observer.OnNext(Unit.Default);
                 observer.OnCompleted();
             }
@@ -253,6 +299,7 @@ namespace NicoliveClient
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
+
                 observer.OnNext(Unit.Default);
                 observer.OnCompleted();
             }
@@ -316,10 +363,10 @@ namespace NicoliveClient
             }
         }
 
-
         #endregion
 
         #region 番組延長
+
         /// <summary>
         /// 延長手段を取得する
         /// </summary>
@@ -504,7 +551,6 @@ namespace NicoliveClient
 
         #endregion
 
-
         #region アンケート
 
         /// <summary>
@@ -569,6 +615,7 @@ namespace NicoliveClient
                     observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
                     yield break;
                 }
+
                 observer.OnNext(Unit.Default);
                 observer.OnCompleted();
             }
@@ -630,7 +677,6 @@ namespace NicoliveClient
                 observer.OnCompleted();
             }
         }
-
 
 
         /// <summary>
@@ -731,8 +777,6 @@ namespace NicoliveClient
         }
 
         #endregion
-
-
     }
 
 

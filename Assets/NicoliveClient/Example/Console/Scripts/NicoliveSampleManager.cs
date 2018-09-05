@@ -100,7 +100,7 @@ namespace NicoliveClient.Example
             }
 
             //番組ID取得
-            return _nicoliveApiClient.GetCurrentNicoliveProgramIdAsync();
+            return _nicoliveApiClient.GetCurrentCommunityProgramIdAsync();
         }
 
         /// <summary>
