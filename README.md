@@ -73,13 +73,47 @@ client.SetCustomUserAgent("YourApplicationNameHere");
 
 ## 自分が今放送している番組のID取得
 
-`GetCurrentNicoliveProgramIdAsync()` で取得可能。ただし放送していない状態でも予約番組があるとそのIDが返される。
+### コミュニティ番組のみでよい場合
+
+`GetCurrentCommunityProgramIdAsync()` で取得可能。取得できない場合は`OnError()`が返る。
 
 ```cs
 //現在放送中の番組ID取得
-client.GetCurrentNicoliveProgramIdAsync()
+client.GetCurrentCommunityProgramIdAsync()
     .Subscribe(lv => Debug.Log(lv));
 ```
+
+### チャンネル番組を含む場合
+
+チャンネル番組を含めて放送中IDが欲しい場合は、 `GetScheduledProgramListAsync()` 使う必要がある。
+
+ `GetScheduledProgramListAsync()`を利用すると、ユーザに紐付いた放送予定・放送中のコミュニティ・チャンネル番組を一覧で取得できる。
+ その中から該当のチャンネルIDの番組IDを検索する必要がある。
+
+
+```cs
+var targetChannelId = "ch123456789";
+
+client.GetScheduledProgramListAsync()
+    .Subscribe(programs =>
+    {
+        foreach (var programSchedule in programs)
+        {
+            if (programSchedule.SocialGroupId == targetChannelId
+                && programSchedule.Status == ProgramStatus.OnAir
+                && programSchedule.Status == ProgramStatus.Test //テスト放送も判定に含めるなら必要
+            )
+            {
+                Debug.Log(targetChannelId + "は現在、" + programSchedule.ProgramId + "で配信中です。");
+                return;
+            }
+        }
+
+        Debug.Log(targetChannelId + "は現在配信していません。");
+    });
+```
+
+
 
 ## 番組の詳細情報取得
 
