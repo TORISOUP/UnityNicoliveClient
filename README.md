@@ -73,9 +73,12 @@ client.SetCustomUserAgent("YourApplicationNameHere");
 
 ## 自分が今放送している番組のID取得
 
+
 ### コミュニティ番組のみでよい場合
 
-`GetCurrentCommunityProgramIdAsync()` で取得可能。取得できない場合は`OnError()`が返る。
+`GetCurrentCommunityProgramIdAsync()` で取得可能。取得できない場合は`OnError()`が返る。  
+**※番組作成後にAPIで取得できるようになるまで１分程度かかる点に注意。**
+
 
 ```cs
 //現在放送中の番組ID取得
@@ -89,6 +92,9 @@ client.GetCurrentCommunityProgramIdAsync()
 
  `GetScheduledProgramListAsync()`を利用すると、ユーザに紐付いた放送予定・放送中のコミュニティ・チャンネル番組を一覧で取得できる。
  その中から該当のチャンネルIDの番組IDを検索する必要がある。
+ 
+ **※番組作成後にAPIで取得できるようになるまで１分程度かかる点に注意。**
+
 
 
 ```cs
