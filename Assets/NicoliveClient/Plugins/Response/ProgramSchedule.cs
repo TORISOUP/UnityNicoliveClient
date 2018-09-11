@@ -83,7 +83,7 @@ namespace NicoliveClient
                     break;
             }
 
-            var socialGroupType = socialGroupId.Substring(0, 2) == "co"
+            var socialGroupType = socialGroupId.StartsWith("co")
                 ? SocialGroupType.Community
                 : SocialGroupType.Channel;
 
