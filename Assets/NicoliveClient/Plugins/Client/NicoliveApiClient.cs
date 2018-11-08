@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Assets.NicoliveClient.Plugins.Utilities;
 using UniRx;
 using UnityEngine;
@@ -81,7 +82,7 @@ namespace NicoliveClient
         {
             return GetCurrentCommunityProgramIdAsync();
         }
-        
+
         /// <summary>
         /// 現在放送中(テスト中含む)のコミュニティ番組の番組IDを取得する。
         /// 更新頻度が遅めのAPIなので、数分待たないと最新情報が取得できない場合がある。
@@ -492,12 +493,18 @@ namespace NicoliveClient
                 }
 
                 var json = www.downloadHandler.text;
+                try
+                {
+                    var dto = JsonUtility.FromJson<ApiResponseDto<ProgramInfoDto>>(json);
+                    var programInfo = dto.data.ToProgramInfo();
 
-                var dto = JsonUtility.FromJson<ApiResponseDto<ProgramInfoDto>>(json);
-                var programInfo = dto.data.ToProgramInfo();
-
-                observer.OnNext(programInfo);
-                observer.OnCompleted();
+                    observer.OnNext(programInfo);
+                    observer.OnCompleted();
+                }
+                catch (Exception e)
+                {
+                    observer.OnError(new Exception("番組情報が取得できませんでした"));
+                }
             }
         }
 
@@ -777,6 +784,7 @@ namespace NicoliveClient
         }
 
         #endregion
+
     }
 
 
