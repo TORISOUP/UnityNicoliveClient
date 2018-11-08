@@ -14,11 +14,20 @@ namespace NicoliveClient.Example
     /// </summary>
     public class CommentPanel : MonoBehaviour
     {
-        [SerializeField] private NicoliveSampleManager _manager;
+        [SerializeField]
+        private NicoliveSampleManager _manager;
 
-        [SerializeField] private Button _connectButton;
-        [SerializeField] private Button _disconnectButton;
-        [SerializeField] private Text _roomCountText;
+        [SerializeField]
+        private Button _connectButton;
+
+        [SerializeField]
+        private Button _disconnectButton;
+
+        [SerializeField]
+        private Text _roomCountText;
+
+        [SerializeField]
+        private Button _getRoomButton;
 
         /// <summary>
         /// 受信したコメント情報
@@ -39,18 +48,36 @@ namespace NicoliveClient.Example
 
         private IEnumerable<NicoliveCommentClient> _commentClients;
 
+        private ReactiveProperty<CommentServerInfo[]> _commentServerInfos = new ReactiveProperty<CommentServerInfo[]>();
+
         void Start()
         {
+            // 接続先情報を取得する
+            _getRoomButton.OnClickAsObservable()
+                .ThrottleFirst(TimeSpan.FromSeconds(2))
+                .Subscribe(_ =>
+                {
+                    // ユーザ生放送のAPIを先に実行し、失敗したら公式側のAPIを叩く
+                    Observable.Catch(new[]
+                    {
+                        _manager.NicoliveApiClient.GetProgramInfoAsync().Select(x => x.Rooms.Select(r => r.CommentServerInfo)),
+                    }).Subscribe(comments =>
+                    {
+                        _commentServerInfos.Value = comments.ToArray();
+                    }, ex => _commentServerInfos.Value = new CommentServerInfo[0]);
+                });
 
             //部屋数が更新されたらUIへ反映する
-            _manager.CurrentRooms
-                    .ObserveCountChanged()
-                    .Subscribe(x =>
-                    {
-                        //接続していない かつ 部屋数が1以上のときのみ接続できる
-                        _connectButton.interactable = !_isConnected.Value && x > 0;
-                        _roomCountText.text = string.Format("現在の部屋数:{0}", x);
-                    });
+            _commentServerInfos
+                .Where(x => x != null)
+                .Select(x => x.Length)
+                .DistinctUntilChanged()
+                .Subscribe(x =>
+                {
+                    //接続していない かつ 部屋数が1以上のときのみ接続できる
+                    _connectButton.interactable = !_isConnected.Value && x > 0;
+                    _roomCountText.text = string.Format("現在の部屋数:{0}", x);
+                });
 
             //接続状態が更新されたらボタンに反映する
             _isConnected.Subscribe(x =>
@@ -88,18 +115,19 @@ namespace NicoliveClient.Example
             Disconnect();
 
             //各部屋ごとのクライアント作成
-            _commentClients = _manager
-                .CurrentRooms.Values
-                .Select(x => new NicoliveCommentClient(x, _manager.CurrentUser.UserId))
+            _commentClients = _commentServerInfos?.Value
+                ?.Select(x => new NicoliveCommentClient(x, _manager.CurrentUser.UserId))
                 .ToArray();
+
+            if (_commentClients == null) return;
 
             //全部屋の情報をまとめて1つのObservableにする
             _reciveDisposable =
                 _commentClients
-                .Select(x => x.OnMessageAsObservable)
-                .Merge()
-                .TakeUntilDestroy(this) //このGameObjectが破棄されたらOnCompletedを差し込む
-                .Subscribe(_onCommentRecieved); // Mergeした結果を1つのSubjectに流し込む
+                    ?.Select(x => x.OnMessageAsObservable)
+                    .Merge()
+                    .TakeUntilDestroy(this) //このGameObjectが破棄されたらOnCompletedを差し込む
+                    .Subscribe(_onCommentRecieved); // Mergeした結果を1つのSubjectに流し込む
 
             //接続開始
             foreach (var c in _commentClients)
@@ -124,6 +152,7 @@ namespace NicoliveClient.Example
                 {
                     c.Dispose();
                 }
+
                 _commentClients = null;
             }
         }

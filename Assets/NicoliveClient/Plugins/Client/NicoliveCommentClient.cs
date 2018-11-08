@@ -64,6 +64,16 @@ namespace NicoliveClient
             Initialize();
         }
 
+        public NicoliveCommentClient(CommentServerInfo commentServerInfo, string userId)
+        {
+            WebSocketUri = commentServerInfo.WebSocketUri;
+            RoomName = "";
+            RoomId = 0;
+            _userId = userId;
+            ThreadId = commentServerInfo.Thread;
+            Initialize();
+        }
+
         private void Initialize()
         {
             _ws = new WebSocket(WebSocketUri.AbsoluteUri, "msg.nicovideo.jp#json");
@@ -92,16 +102,18 @@ namespace NicoliveClient
         public void Connect(int resFrom)
         {
             if (resFrom < 0) resFrom = 0;
-            _ws.Connect();
+            Observable.Start(() =>
+            {
+                _ws.Connect();
 
-            //初期化のJson
-            _ws.Send(
-                "[{\"ping\":{\"content\":\"rs:0\"}},{\"ping\":{\"content\":\"ps:0\"}},"
-                + "{\"thread\":{\"thread\":\"" + ThreadId + "\",\"version\":\"20061206\",\"fork\":0,"
-                + "\"user_id\":\"" + _userId + "\",\"res_from\":-" + resFrom + ",\"with_global\":1,\"scores\":1,\"nicoru\":0}},"
-                + "{\"ping\":{\"content\":\"pf:0\"}},{\"ping\":{\"content\":\"rf:0\"}}]"
+                //初期化のJson
+                _ws.Send(
+                    "[{\"ping\":{\"content\":\"rs:0\"}},{\"ping\":{\"content\":\"ps:0\"}},"
+                    + "{\"thread\":{\"thread\":\"" + ThreadId + "\",\"version\":\"20061206\",\"fork\":0,"
+                    + "\"user_id\":\"" + _userId + "\",\"res_from\":-" + resFrom + ",\"with_global\":1,\"scores\":1,\"nicoru\":0}},"
+                    + "{\"ping\":{\"content\":\"pf:0\"}},{\"ping\":{\"content\":\"rf:0\"}}]"
                 );
-
+            }).Subscribe();
         }
 
         /// <summary>
@@ -109,7 +121,7 @@ namespace NicoliveClient
         /// </summary>
         public void Disconnect()
         {
-            _ws.Close();
+            _ws.CloseAsync();
         }
 
         /// <summary>
@@ -121,14 +133,16 @@ namespace NicoliveClient
             {
                 if (_ws != null)
                 {
-                    _ws.Close();
+                    _ws.CloseAsync();
                 }
+
                 if (_disposedEventAsyncSubject != null)
                 {
                     _disposedEventAsyncSubject.OnNext(Unit.Default);
                     _disposedEventAsyncSubject.OnCompleted();
                     _disposedEventAsyncSubject.Dispose();
                 }
+
                 _ws = null;
                 _isDisposed = true;
             }

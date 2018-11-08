@@ -185,6 +185,8 @@ namespace NicoliveClient
         /// </summary>
         public string ThreadId { get; private set; }
 
+        public CommentServerInfo CommentServerInfo { get; }
+
         public Room(string name, int id, string webSocketUri, string xmlSocketUri, string threadId) : this()
         {
             Name = name;
@@ -192,6 +194,7 @@ namespace NicoliveClient
             WebSocketUri = new Uri(webSocketUri);
             XmlSocketUri = new Uri(xmlSocketUri);
             ThreadId = threadId;
+            CommentServerInfo = new CommentServerInfo(Name, WebSocketUri, XmlSocketUri, ThreadId);
         }
     }
 
