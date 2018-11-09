@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using Assets.NicoliveClient.Plugins.Utilities;
 using UniRx;
 using UnityEngine;

@@ -114,9 +114,11 @@ namespace NicoliveClient.Example
         {
             Disconnect();
 
+            if (_commentServerInfos.Value == null) return;
+            
             //各部屋ごとのクライアント作成
-            _commentClients = _commentServerInfos?.Value
-                ?.Select(x => new NicoliveCommentClient(x, _manager.CurrentUser.UserId))
+            _commentClients = _commentServerInfos.Value
+                .Select(x => new NicoliveCommentClient(x, _manager.CurrentUser.UserId))
                 .ToArray();
 
             if (_commentClients == null) return;
@@ -124,7 +126,7 @@ namespace NicoliveClient.Example
             //全部屋の情報をまとめて1つのObservableにする
             _reciveDisposable =
                 _commentClients
-                    ?.Select(x => x.OnMessageAsObservable)
+                    .Select(x => x.OnMessageAsObservable)
                     .Merge()
                     .TakeUntilDestroy(this) //このGameObjectが破棄されたらOnCompletedを差し込む
                     .Subscribe(_onCommentRecieved); // Mergeした結果を1つのSubjectに流し込む
