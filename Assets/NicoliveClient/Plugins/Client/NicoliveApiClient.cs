@@ -15,8 +15,6 @@ namespace NicoliveClient
     {
         private NiconicoUser _niconicoUser;
 
-        private Regex _lvRegex = new Regex(@"lv\d+");
-
         /// <summary>
         /// 現在の操作対象となっている番組ID
         /// </summary>
@@ -500,7 +498,7 @@ namespace NicoliveClient
                     observer.OnNext(programInfo);
                     observer.OnCompleted();
                 }
-                catch (Exception e)
+                catch
                 {
                     observer.OnError(new Exception("番組情報が取得できませんでした"));
                 }
