@@ -57,7 +57,13 @@ namespace NicoliveClient
         /// </summary>
         public int RoomId { get; private set; }
 
-        public Chat(string thread, long vpos, long date, string mail, string userId, int premium, bool anonymity, string content, int no, int roomId) : this()
+        /// <summary>
+        /// NGスコア
+        /// </summary>
+        /// <value></value>
+        public int Score { get; private set; }
+
+        public Chat(string thread, long vpos, long date, string mail, string userId, int premium, bool anonymity, string content, int no, int roomId, int score) : this()
         {
             Thread = thread;
             Vpos = vpos;
@@ -69,6 +75,7 @@ namespace NicoliveClient
             Content = content;
             No = no;
             RoomId = roomId;
+            Score = score;
         }
 
         /// <summary>
@@ -100,6 +107,7 @@ namespace NicoliveClient
         public int anonymity;
         public string content;
         public int no;
+        public int score;
 
         public bool IsSuccess()
         {
@@ -118,7 +126,8 @@ namespace NicoliveClient
                 anonymity > 0,
                 content,
                 no,
-                roomId
+                roomId,
+                score
                 );
         }
     }
