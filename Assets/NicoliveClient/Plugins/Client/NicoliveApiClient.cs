@@ -119,7 +119,7 @@ namespace NicoliveClient
 
         private IEnumerator GetScheduledProgramListCoroutine(IObserver<ProgramSchedule[]> observer)
         {
-            var url = "http://live2.nicovideo.jp/unama/tool/v1/program_schedules";
+            var url = "https://live2.nicovideo.jp/unama/tool/v1/program_schedules";
 
             using (var www = UnityWebRequest.Get(url))
             {
@@ -172,7 +172,7 @@ namespace NicoliveClient
 
         private IEnumerator PutOperatorCommentCoroutine(IObserver<Unit> observer, string name, string text, string color, bool isPermanent)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/operator_comment", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/operator_comment", NicoliveProgramId);
 
             var json = JsonUtility.ToJson(new OperatorCommentRequest
             {
@@ -219,7 +219,7 @@ namespace NicoliveClient
 
         private IEnumerator DeleteOperatorCommentCoroutine(IObserver<Unit> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/operator_comment", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/operator_comment", NicoliveProgramId);
 
             using (var www = UnityWebRequest.Delete(url))
             {
@@ -265,7 +265,7 @@ namespace NicoliveClient
 
         private IEnumerator PostBspCommentCoroutine(IObserver<Unit> observer, string name, string text, string color)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/bsp_comment", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/bsp_comment", NicoliveProgramId);
 
             var json = JsonUtility.ToJson(new BspCommentRequest
             {
@@ -327,7 +327,7 @@ namespace NicoliveClient
 
         private IEnumerator SegmentCoroutine(IObserver<Unit> observer, string state)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/segment", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/segment", NicoliveProgramId);
 
             var json = "{\"state\":\"" + state + "\"}";
 
@@ -376,7 +376,7 @@ namespace NicoliveClient
 
         private IEnumerator GetExtensionCoroutine(IObserver<ExtensionMethods[]> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/extension", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/extension", NicoliveProgramId);
 
             using (var www = UnityWebRequest.Get(url))
             {
@@ -418,7 +418,7 @@ namespace NicoliveClient
 
         private IEnumerator ExtendProgramCoroutine(IObserver<ExtendResult> observer, int minutes)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/extension", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/extension", NicoliveProgramId);
 
             using (var www = UnityWebRequest.Post(url, "POST"))
             {
@@ -465,7 +465,7 @@ namespace NicoliveClient
 
         private IEnumerator GetProgramInfo(IObserver<ProgramInfo> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/programinfo", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/programinfo", NicoliveProgramId);
 
             using (var www = UnityWebRequest.Get(url))
             {
@@ -519,7 +519,7 @@ namespace NicoliveClient
 
         private IEnumerator GetProgramStatistics(IObserver<StatisticsResult> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/statistics", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/statistics", NicoliveProgramId);
 
             using (var www = UnityWebRequest.Get(url))
             {
@@ -579,7 +579,7 @@ namespace NicoliveClient
 
         private IEnumerator StartEnqueteCoroutine(IObserver<Unit> observer, string title, IEnumerable<string> questions)
         {
-            var url = string.Format("http://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete", _pgProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete", _pgProgramId);
 
             var items = questions as string[] ?? questions.ToArray();
 
@@ -646,7 +646,7 @@ namespace NicoliveClient
 
         private IEnumerator ShowResultEnqueteCoroutine(IObserver<EnqueteResult> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete/show_result", _pgProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete/show_result", _pgProgramId);
 
             var json = "{ \"programId\":" + _pgProgramId + " }";
 
@@ -703,7 +703,7 @@ namespace NicoliveClient
 
         private IEnumerator FinishEnqueteCoroutine(IObserver<Unit> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete/end", _pgProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/unama/api/v1/programs/{0}/enquete/end", _pgProgramId);
 
             var json = "{ \"programId\":" + _pgProgramId + " }";
 
@@ -750,7 +750,7 @@ namespace NicoliveClient
 
         private IEnumerator GetPgProgramIdCoroutine(IObserver<string> observer)
         {
-            var url = string.Format("http://live2.nicovideo.jp/watch/{0}/player", NicoliveProgramId);
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/player", NicoliveProgramId);
 
             using (var www = UnityWebRequest.Get(url))
             {
