@@ -249,62 +249,6 @@ namespace NicoliveClient
 
         #endregion
 
-        #region BSPコメント
-
-        /// <summary>
-        /// BSPコメントを投稿する
-        /// </summary>
-        /// <param name="text">本文</param>
-        /// <param name="name">投稿者名（nullで非表示)</param>
-        /// <param name="color">表示色</param>
-        /// <returns></returns>
-        public IObservable<Unit> SendBspCommentAsync(string text, string name = "", string color = "white")
-        {
-            return Observable.FromCoroutine<Unit>(o => PostBspCommentCoroutine(o, name, text, color)).Kick();
-        }
-
-        private IEnumerator PostBspCommentCoroutine(IObserver<Unit> observer, string name, string text, string color)
-        {
-            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/bsp_comment", NicoliveProgramId);
-
-            var json = JsonUtility.ToJson(new BspCommentRequest
-            {
-                text = text,
-                userName = name,
-                color = color
-            });
-
-            using (var www = UnityWebRequest.Post(url, "POST"))
-            {
-                var data = Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(data);
-                www.SetRequestHeader("Content-type", "application/json");
-                www.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
-                www.SetRequestHeader("User-Agent", _userAgent);
-
-#if UNITY_2017_2_OR_NEWER
-                yield return www.SendWebRequest();
-#else
-                yield return www.Send();
-#endif
-
-#if UNITY_2017_1_OR_NEWER
-                if (www.isHttpError || www.isNetworkError)
-#else
-                if (www.isError)
-#endif
-                {
-                    observer.OnError(new NicoliveApiClientException(www.downloadHandler.text));
-                    yield break;
-                }
-
-                observer.OnNext(Unit.Default);
-                observer.OnCompleted();
-            }
-        }
-
-        #endregion
-
         #region 番組開始/終了
 
         /// <summary>
