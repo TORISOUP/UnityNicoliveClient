@@ -402,14 +402,24 @@ namespace NicoliveClient
         /// <summary>
         /// 番組情報を取得する
         /// </summary>
-        public IObservable<ProgramInfo> GetProgramInfoAsync()
+        public IObservable<ProgramInfo> GetProgramInfoAsync(string programId)
         {
-            return Observable.FromCoroutine<ProgramInfo>(GetProgramInfo).Kick();
+            return Observable.FromCoroutine<ProgramInfo>(o => GetProgramInfo(o, programId)).Kick();
         }
 
-        private IEnumerator GetProgramInfo(IObserver<ProgramInfo> observer)
+        /// <summary>
+        /// 番組情報を取得する
+        /// SetNicoliveProgramId()で設定された番組IDを対象とする
+        /// </summary>
+        public IObservable<ProgramInfo> GetProgramInfoAsync()
         {
-            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/programinfo", NicoliveProgramId);
+            return Observable.FromCoroutine<ProgramInfo>(o => GetProgramInfo(o, null)).Kick();
+        }
+
+        private IEnumerator GetProgramInfo(IObserver<ProgramInfo> observer, string programId)
+        {
+            var lv = string.IsNullOrEmpty(programId) ? NicoliveProgramId : programId;
+            var url = string.Format("https://live2.nicovideo.jp/watch/{0}/programinfo", lv);
 
             using (var www = UnityWebRequest.Get(url))
             {
