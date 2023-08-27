@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Text;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,39 +10,44 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ScheduledPro
 {
     public class ScheduledProgramPanel : MonoBehaviour
     {
-        [SerializeField]
-        private NicoliveSampleManager _manager;
+        [SerializeField] private NicoliveSampleManager _manager;
 
-        [SerializeField]
-        private Button _getButton;
+        [SerializeField] private Button _getButton;
 
-        [SerializeField]
-        private Text _resultLabel;
+        [SerializeField] private Text _resultLabel;
 
         void Start()
         {
-            _getButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(5))
-                .Subscribe(_ =>
+            var ct = this.GetCancellationTokenOnDestroy();
+            _getButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-                    _manager.NicoliveApiClient.GetScheduledProgramListAsync()
-                        .Subscribe(result =>
+                    try
+                    {
+                        var list = await _manager.NicoliveApiClient.GetScheduledProgramListAsync(c);
+                        if (list.Length == 0)
                         {
-                            if (result.Length == 0)
-                            {
-                                _resultLabel.text = "現在予定されている番組はありません";
-                                return;
-                            }
+                            _resultLabel.text = "現在予定されている番組はありません";
+                            return;
+                        }
 
-                            var builder = new StringBuilder();
-                            foreach (var schedule in result)
-                            {
-                                builder.Append(string.Format("{0}:{1}:{2}\n", schedule.ProgramId, schedule.SocialGroupId, schedule.Status));
-                            }
+                        var builder = new StringBuilder();
+                        foreach (var schedule in list)
+                        {
+                            builder.Append($"{schedule.ProgramId}:{schedule.SocialGroupId}:{schedule.Status}\n");
+                        }
 
-                            _resultLabel.text = builder.ToString();
-                        }, Debug.LogError);
-                });
+                        _resultLabel.text = builder.ToString();
+
+                        // Delay
+                        await UniTask.Delay(TimeSpan.FromSeconds(5), cancellationToken: c);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, ct)
+                .Forget();
         }
     }
 }

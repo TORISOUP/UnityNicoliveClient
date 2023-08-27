@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Linq;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,24 +22,31 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramIdPan
 
         void Start()
         {
-            _getCurrentProgramIdButton
-                .OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(3)) //連打防止
-                .Subscribe(_ =>
+            var ct = this.GetCancellationTokenOnDestroy();
+            _getCurrentProgramIdButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-                    //取得したIDは一旦UIに反映
-                    _manager.GetCurrentProgramIdAsync()
-                        .Subscribe(x => _programIdInputField.text = x, Debug.LogError);
-                });
+                    try
+                    {
+                        //取得したIDは一旦UIに反映
+                        _programIdInputField.text = (await _manager.GetCurrentProgramIdAsync(c)).Last();
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, cancellationToken: ct)
+                .Forget();
 
             //設定ボタンが押されたらUIの値を反映する
             _setProgramIdButton.OnClickAsObservable()
-                .Subscribe(_ => _manager.SetTargetProgramId(_programIdInputField.text));
+                .Subscribe(_ => _manager.SetTargetProgramId(_programIdInputField.text))
+                .AddTo(ct);
 
             //現在の操作対象lv表示
             _manager.CurrentProgramId
-                .SubscribeToText(_currentProgramIdText);
+                .SubscribeToText(_currentProgramIdText)
+                .AddTo(ct);
         }
-
     }
 }

@@ -133,7 +133,7 @@ namespace TORISOUP.NicoliveClient.Client
         /// <param name="color">表示色</param>
         /// <param name="isPermanent">永続表示するか</param>
         /// <returns></returns>
-        public async UniTask PutOperatorCommentAsync(
+        public async UniTask SendOperatorCommentAsync(
             string name,
             string text,
             string color,
@@ -305,7 +305,7 @@ namespace TORISOUP.NicoliveClient.Client
         /// 番組情報を取得する
         /// SetNicoliveProgramId()で設定された番組IDを対象とする
         /// </summary>
-        public async UniTask<ProgramInfo> GetCurrentProgramInfoAsync(CancellationToken ct)
+        public async UniTask<ProgramInfo> GetProgramInfoAsync(CancellationToken ct)
         {
             return await _GetProgramInfoAsync(NicoliveProgramId, ct);
         }

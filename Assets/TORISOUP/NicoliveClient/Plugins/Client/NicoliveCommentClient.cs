@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Comment;
 using TORISOUP.NicoliveClient.Response;
 using UniRx;
@@ -34,6 +37,7 @@ namespace TORISOUP.NicoliveClient.Client
 
         private IObservable<Chat> _onMessageAsObservable;
         private readonly object _lockObject = new object();
+        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// 受信したコメントオブジェクトを通知する
@@ -103,19 +107,37 @@ namespace TORISOUP.NicoliveClient.Client
         /// <param name="resFrom">過去何件分取得するか</param>
         public void Connect(int resFrom)
         {
-            if (resFrom < 0) resFrom = 0;
-            Observable.Start(() =>
-            {
-                _ws.Connect();
+            Disconnect();
+            _cancellationTokenSource = new CancellationTokenSource();
 
-                //初期化のJson
-                _ws.Send(
-                    "[{\"ping\":{\"content\":\"rs:0\"}},{\"ping\":{\"content\":\"ps:0\"}},"
-                    + "{\"thread\":{\"thread\":\"" + ThreadId + "\",\"version\":\"20061206\",\"fork\":0,"
-                    + "\"user_id\":\"" + _userId + "\",\"res_from\":-" + resFrom + ",\"with_global\":1,\"scores\":1,\"nicoru\":0}},"
-                    + "{\"ping\":{\"content\":\"pf:0\"}},{\"ping\":{\"content\":\"rf:0\"}}]"
-                );
-            }).Subscribe();
+            if (resFrom < 0) resFrom = 0;
+
+            ConnectAsync(resFrom, _cancellationTokenSource.Token).Forget();
+        }
+
+        private async UniTaskVoid ConnectAsync(int resFrom, CancellationToken ct)
+        {
+            if (_ws == null) return;
+
+            await UniTask.SwitchToThreadPool();
+
+            _ws.Connect();
+
+            //初期化のJson
+            _ws.Send(
+                "[{\"ping\":{\"content\":\"rs:0\"}},{\"ping\":{\"content\":\"ps:0\"}},"
+                + "{\"thread\":{\"thread\":\"" + ThreadId + "\",\"version\":\"20061206\",\"fork\":0,"
+                + "\"user_id\":\"" + _userId + "\",\"res_from\":-" + resFrom +
+                ",\"with_global\":1,\"scores\":1,\"nicoru\":0}},"
+                + "{\"ping\":{\"content\":\"pf:0\"}},{\"ping\":{\"content\":\"rf:0\"}}]"
+            );
+
+            // pingを定期的に投げる
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken: ct).ConfigureAwait(false);
+                if (_ws != null && _ws.IsAlive) _ws.Ping();
+            }
         }
 
         /// <summary>
@@ -123,6 +145,9 @@ namespace TORISOUP.NicoliveClient.Client
         /// </summary>
         public void Disconnect()
         {
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
+
             if (_ws != null && _ws.IsAlive)
             {
                 _ws.CloseAsync();
@@ -136,7 +161,7 @@ namespace TORISOUP.NicoliveClient.Client
         {
             lock (_lockObject)
             {
-                _ws?.CloseAsync();
+                Disconnect();
 
                 if (_disposedEventAsyncSubject != null)
                 {

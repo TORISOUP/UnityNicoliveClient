@@ -1,4 +1,6 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,17 +22,24 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel
         void Start()
         {
             //ログインボタンが押された
-            _singIn.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(3)) //連打防止
-                .Subscribe(_ =>
-                {
-                    _loginManager.Login(_mail.text, _pass.text);
-                });
 
-            //エラーメッセージ表示
-            _loginManager.ErrorMessage.SubscribeToText(_errorMessage);
-
+            _singIn
+                .OnClickAsAsyncEnumerable(this.GetCancellationTokenOnDestroy())
+                .ForEachAwaitWithCancellationAsync(
+                    async (_, ct) =>
+                    {
+                        try
+                        {
+                            _errorMessage.text = "";
+                            await _loginManager.LoginAsync(_mail.text, _pass.text, ct);
+                        }
+                        catch (Exception e)
+                        {
+                            _errorMessage.text = e.Message;
+                        }
+                    },
+                    this.GetCancellationTokenOnDestroy())
+                .Forget();
         }
-
     }
 }

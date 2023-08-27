@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using TORISOUP.NicoliveClient.Client;
 using TORISOUP.NicoliveClient.Comment;
 using TORISOUP.NicoliveClient.Response;
@@ -17,20 +19,15 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
     /// </summary>
     public class CommentPanel : MonoBehaviour
     {
-        [SerializeField]
-        private NicoliveSampleManager _manager;
+        [SerializeField] private NicoliveSampleManager _manager;
 
-        [SerializeField]
-        private Button _connectButton;
+        [SerializeField] private Button _connectButton;
 
-        [SerializeField]
-        private Button _disconnectButton;
+        [SerializeField] private Button _disconnectButton;
 
-        [SerializeField]
-        private Text _roomCountText;
+        [SerializeField] private Text _roomCountText;
 
-        [SerializeField]
-        private Button _getRoomButton;
+        [SerializeField] private Button _getRoomButton;
 
         /// <summary>
         /// 受信したコメント情報
@@ -44,31 +41,35 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
         private ReactiveProperty<bool> _isConnected = new BoolReactiveProperty();
 
         //接続しているObservableを切断する時に必要
-        private IDisposable _reciveDisposable;
+        private IDisposable _recieveDisposable;
 
         //全クランアントから配送されたコメント情報を全てこのSubjectに集約する
         private Subject<Chat> _onCommentRecieved = new Subject<Chat>();
 
         private IEnumerable<NicoliveCommentClient> _commentClients;
 
-        private ReactiveProperty<CommentServerInfo[]> _commentServerInfos = new ReactiveProperty<CommentServerInfo[]>();
+        private readonly ReactiveProperty<CommentServerInfo[]> _commentServerInfos =
+            new ReactiveProperty<CommentServerInfo[]>();
 
         void Start()
         {
+            var ct = this.GetCancellationTokenOnDestroy();
+
             // 接続先情報を取得する
-            _getRoomButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(2))
-                .Subscribe(_ =>
+            _getRoomButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-                    // ユーザ生放送のAPIを先に実行し、失敗したら公式側のAPIを叩く
-                    Observable.Catch(new[]
+                    try
                     {
-                        _manager.NicoliveApiClient.GetProgramInfoAsync().Select(x => x.Rooms.Select(r => r.CommentServerInfo)),
-                    }).Subscribe(comments =>
+                        var info = await _manager.NicoliveApiClient.GetProgramInfoAsync(c);
+                        _commentServerInfos.Value = info.Rooms.Select(r => r.CommentServerInfo).ToArray();
+                    }
+                    catch (Exception e)when (e is not OperationCanceledException)
                     {
-                        _commentServerInfos.Value = comments.ToArray();
-                    }, ex => _commentServerInfos.Value = new CommentServerInfo[0]);
-                });
+                        _commentServerInfos.Value = Array.Empty<CommentServerInfo>();
+                    }
+                }, cancellationToken: ct)
+                .Forget();
 
             //部屋数が更新されたらUIへ反映する
             _commentServerInfos
@@ -80,14 +81,16 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
                     //接続していない かつ 部屋数が1以上のときのみ接続できる
                     _connectButton.interactable = !_isConnected.Value && x > 0;
                     _roomCountText.text = string.Format("現在の部屋数:{0}", x);
-                });
+                })
+                .AddTo(ct);
 
             //接続状態が更新されたらボタンに反映する
             _isConnected.Subscribe(x =>
-            {
-                _connectButton.interactable = !x && _manager.CurrentRooms.Count > 0;
-                _disconnectButton.interactable = x;
-            });
+                {
+                    _connectButton.interactable = !x && _manager.CurrentRooms.Count > 0;
+                    _disconnectButton.interactable = x;
+                })
+                .AddTo(ct);
 
             //コメントサーバに接続
             _connectButton.OnClickAsObservable()
@@ -95,7 +98,8 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
                 {
                     Connect();
                     _isConnected.Value = true;
-                });
+                })
+                .AddTo(ct);
 
             //コメントサーバから切断
             _disconnectButton.OnClickAsObservable()
@@ -103,11 +107,13 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
                 {
                     Disconnect();
                     _isConnected.Value = false;
-                });
+                })
+                .AddTo(ct);
 
             //GameObjectが破棄されたら切断する
             this.OnDestroyAsObservable()
-                .Subscribe(_ => Disconnect());
+                .Subscribe(_ => Disconnect())
+                .AddTo(ct);
         }
 
         /// <summary>
@@ -118,7 +124,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
             Disconnect();
 
             if (_commentServerInfos.Value == null) return;
-            
+
             //各部屋ごとのクライアント作成
             _commentClients = _commentServerInfos.Value
                 .Select(x => new NicoliveCommentClient(x, _manager.CurrentUser.UserId))
@@ -127,7 +133,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
             if (_commentClients == null) return;
 
             //全部屋の情報をまとめて1つのObservableにする
-            _reciveDisposable =
+            _recieveDisposable =
                 _commentClients
                     .Select(x => x.OnMessageAsObservable)
                     .Merge()
@@ -148,7 +154,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
         private void Disconnect()
         {
             //先にObservableを停止
-            if (_reciveDisposable != null) _reciveDisposable.Dispose();
+            if (_recieveDisposable != null) _recieveDisposable.Dispose();
 
             //各クライアントを破棄
             if (_commentClients != null)

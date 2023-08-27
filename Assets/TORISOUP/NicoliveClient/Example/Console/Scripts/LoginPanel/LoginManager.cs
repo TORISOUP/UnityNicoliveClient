@@ -1,4 +1,7 @@
-﻿using TORISOUP.NicoliveClient.Client;
+﻿using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using TORISOUP.NicoliveClient.Client;
 using UniRx;
 using UnityEngine;
 
@@ -14,45 +17,29 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel
         /// </summary>
         public NiconicoUser CurrentUser { get; private set; }
 
-        private ReactiveProperty<bool> _isLoggedIn = new ReactiveProperty<bool>();
-
-        private ReactiveProperty<string> _errorMessage = new ReactiveProperty<string>();
+        private readonly ReactiveProperty<bool> _isLoggedIn = new ReactiveProperty<bool>();
 
 
         /// <summary>
         /// ログイン状態であるか
         /// </summary>
-        public IReadOnlyReactiveProperty<bool> IsLoggedIn
-        {
-            get { return _isLoggedIn; }
-        }
-
-        /// <summary>
-        /// ログイン失敗時のメッセージ
-        /// </summary>
-        public IReadOnlyReactiveProperty<string> ErrorMessage
-        {
-            get { return _errorMessage; }
-        }
-
+        public IReadOnlyReactiveProperty<bool> IsLoggedIn => _isLoggedIn;
 
         /// <summary>
         /// ログイン処理を実行する
         /// </summary>
-        public void Login(string mail, string pass)
+        public async UniTask LoginAsync(string mail, string pass, CancellationToken ct)
         {
-            _errorMessage.Value = "";
-
-            NiconicoUserClient.LoginAsync(mail, pass)
-                .Subscribe(x =>
-                {
-                    CurrentUser = x;
-                    _isLoggedIn.Value = true;
-                }, ex =>
-                {
-                    _errorMessage.Value = ex.Message;
-                    _isLoggedIn.Value = false;
-                });
+            try
+            {
+                CurrentUser = await NiconicoUserClient.LoginAsync(mail, pass, ct);
+                _isLoggedIn.Value = true;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                CurrentUser = default;
+                _isLoggedIn.Value = false;
+            }
         }
     }
 }

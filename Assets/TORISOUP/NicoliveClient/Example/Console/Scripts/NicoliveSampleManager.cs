@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Client;
 using TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel;
 using TORISOUP.NicoliveClient.Response;
@@ -17,7 +19,10 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
 
         private Regex _lvRegex = new Regex(@"^lv\d+$");
 
-        public NicoliveApiClient NicoliveApiClient { get { return _nicoliveApiClient; } }
+        public NicoliveApiClient NicoliveApiClient
+        {
+            get { return _nicoliveApiClient; }
+        }
 
         /// <summary>
         /// 現在の部屋情報
@@ -57,9 +62,9 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
         {
             get
             {
-                return _isSetProgramId ??
-                    (_isSetProgramId = CurrentProgramId.Select(x => !string.IsNullOrEmpty(x))
-                           .ToReadOnlyReactiveProperty());
+                return _isSetProgramId ??=
+                    CurrentProgramId.Select(x => !string.IsNullOrEmpty(x))
+                        .ToReadOnlyReactiveProperty();
             }
         }
 
@@ -81,29 +86,25 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
             });
 
             //対象番組設定
-            _currentProgramId.Subscribe(x =>
-            {
-                if (_nicoliveApiClient != null) _nicoliveApiClient.SetNicoliveProgramId(x);
-            });
+            _currentProgramId.Subscribe(x => { _nicoliveApiClient?.SetNicoliveProgramId(x); });
 
             IsSetProgramId
                 .Subscribe(x => _blockPanel.SetActive(!x));
-
         }
 
         /// <summary>
         /// 現在のユーザに紐づく番組IDを取得する
         /// </summary>
-        public IObservable<string> GetCurrentProgramIdAsync()
+        public async UniTask<string[]> GetCurrentProgramIdAsync(CancellationToken ct)
         {
             if (!_loginManager.IsLoggedIn.Value)
             {
                 Debug.LogWarning("ログインしていません");
-                return Observable.Return("");
+                throw new Exception("Not logged in.");
             }
 
             //番組ID取得
-            return _nicoliveApiClient.GetCurrentCommunityProgramIdAsync();
+            return await _nicoliveApiClient.GetCurrentCommunityProgramIdAsync(ct);
         }
 
         /// <summary>
@@ -121,6 +122,5 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
                 Debug.LogError("不正な番組IDです");
             }
         }
-
     }
 }

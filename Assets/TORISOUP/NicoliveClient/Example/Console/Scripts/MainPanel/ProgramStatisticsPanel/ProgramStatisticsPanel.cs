@@ -1,4 +1,5 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,7 +8,6 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramStati
 {
     public class ProgramStatisticsPanel : MonoBehaviour
     {
-
         [SerializeField] private NicoliveSampleManager _manager;
 
         [SerializeField] private Button _getButton;
@@ -15,21 +15,25 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramStati
 
         void Start()
         {
+            var ct = this.GetCancellationTokenOnDestroy();
+
             var command = _manager.IsSetProgramId.ToReactiveCommand();
 
             _getButton.OnClickAsObservable()
                 .ThrottleFirst(TimeSpan.FromSeconds(5))
-                .Subscribe(_ => command.Execute());
+                .Subscribe(_ => command.Execute())
+                .AddTo(ct);
 
             command.Subscribe(_ =>
                 {
-                    _manager.NicoliveApiClient.GetProgramStatisticsAsync()
-                        .Subscribe(result =>
-                        {
-                            _programStatisticsLabel.text =
-                                string.Format("来場者数:{0} / コメント数:{1}", result.WatchCount, result.CommentCount);
-                        }, Debug.LogError);
-                });
+                    UniTask.Void(async () =>
+                    {
+                        var result = await _manager.NicoliveApiClient.GetProgramStatisticsAsync(ct);
+                        _programStatisticsLabel.text =
+                            $"来場者数:{result.WatchCount} / コメント数:{result.CommentCount}";
+                    });
+                })
+                .AddTo(ct);
         }
     }
 }

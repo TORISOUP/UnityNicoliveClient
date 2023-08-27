@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,47 +23,66 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.EnquetePanel
 
         void Start()
         {
+            var ct = this.GetCancellationTokenOnDestroy();
+
             //アンケート開始
-            StartButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(3)) //連打防止
-                .Subscribe(_ =>
+            StartButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-                    var title = QuestionTitleInputField.text;
-                    var items = itemInputFields.Select(x => x.text);
+                    try
+                    {
+                        var title = QuestionTitleInputField.text;
+                        var items = itemInputFields.Select(x => x.text);
 
-                    _manager.NicoliveApiClient
-                        .StartEnqueteAsync(title, items)
-                        .Subscribe(__ => ResultLabel.text = "アンケートを開始しました", Debug.LogError);
+                        await _manager.NicoliveApiClient
+                            .StartEnqueteAsync(title, items, c);
 
-                });
+                        await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: c);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, cancellationToken: ct)
+                .Forget();
 
             //アンケート結果の表示＆取得
-            ShowResultButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(3)) //連打防止
-                .Subscribe(_ =>
+            ShowResultButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-                    _manager.NicoliveApiClient
-                        .ShowResultEnqueteAsync()
-                        .Subscribe(result =>
-                        {
-                            var message = result.Items.Select(x => string.Format("{0}:{1}%", x.Name, x.Rate))
-                                .Aggregate((p, c) => p + " / " + c);
-                            ResultLabel.text = message;
-                        }, Debug.LogError);
-                });
+                    try
+                    {
+                        var result = await _manager.NicoliveApiClient.ShowResultEnqueteAsync(c);
+
+                        var message = result.Items.Select(x => $"{x.Name}:{x.Rate}%")
+                            .Aggregate((p, c) => p + " / " + c);
+                        ResultLabel.text = message;
+                        await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: c);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, cancellationToken: ct)
+                .Forget();
 
 
             //アンケートの終了
-            EndButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(3)) //連打防止
-                .Subscribe(_ =>
+            EndButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-                    _manager.NicoliveApiClient
-                        .FinishEnqueteAsync()
-                        .Subscribe(__ => ResultLabel.text = "アンケートを終了しました", Debug.LogError);
-                });
-
+                    try
+                    {
+                        await _manager.NicoliveApiClient.FinishEnqueteAsync(c);
+                        ResultLabel.text = "アンケートを終了しました";
+                        await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: c);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, cancellationToken: ct)
+                .Forget();
         }
-
     }
 }

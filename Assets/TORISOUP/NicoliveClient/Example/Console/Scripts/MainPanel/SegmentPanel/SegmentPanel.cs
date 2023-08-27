@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,51 +23,70 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.SegmentPanel
 
         void Start()
         {
-            _startButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(1))
-                .Subscribe(_ =>
-                {
-                    //番組開始
-                    _manager.NicoliveApiClient
-                        .StartProgramAsync()
-                        .Subscribe(__ => { }, Debug.LogError);
-                });
+            var ct = this.GetCancellationTokenOnDestroy();
 
-            _endButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(1))
-                .Subscribe(_ =>
-                {
-                    //番組終了
-                    _manager.NicoliveApiClient
-                        .EndProgramAsync()
-                        .Subscribe(__ => { }, Debug.LogError);
-                });
-
-            _getExtensionButton
-                .OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(1))
-                .Subscribe(_ =>
-                {
-                    //延長上限取得
-                    _manager.NicoliveApiClient
-                        .GetExtensionAsync()
-                        .Subscribe(extensions =>
+            _startButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(
+                    async (_, c) =>
+                    {
+                        try
                         {
+                            await _manager.NicoliveApiClient.StartProgramAsync(c);
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException)
+                        {
+                            Debug.LogError(e);
+                        }
+                    }, ct)
+                .Forget();
+
+            _endButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(
+                    async (_, c) =>
+                    {
+                        try
+                        {
+                            await _manager.NicoliveApiClient.EndProgramAsync(c);
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException)
+                        {
+                            Debug.LogError(e);
+                        }
+                    }, ct)
+                .Forget();
+
+            _getExtensionButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(
+                    async (_, c) =>
+                    {
+                        try
+                        {
+                            var extensions =
+                                await _manager.NicoliveApiClient.GetExtensionAsync(c);
                             var max = extensions.Max(x => x.Minutes);
                             _extendLabel.text = max + "分延長可能";
-                        }, Debug.LogError);
-                });
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException)
+                        {
+                            Debug.LogError(e);
+                        }
+                    }, ct)
+                .Forget();
 
-            _extendButton
-                .OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(5))
-                .Subscribe(_ =>
-                {
-                    //番組延長
-                    _manager.NicoliveApiClient
-                        .ExtendProgramAsync(30)
-                        .Subscribe(__ => { }, Debug.LogError);
-                });
+            _extendButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(
+                    async (_, c) =>
+                    {
+                        try
+                        {
+                            await _manager.NicoliveApiClient.ExtendProgramAsync(30, c);
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException)
+                        {
+                            Debug.LogError(e);
+                        }
+                    }, ct)
+                .Forget();
         }
     }
 }

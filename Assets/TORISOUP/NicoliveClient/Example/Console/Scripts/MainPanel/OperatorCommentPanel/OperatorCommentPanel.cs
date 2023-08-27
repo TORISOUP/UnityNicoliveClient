@@ -1,4 +1,6 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,34 +20,48 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.OperatorComm
         [SerializeField] private Toggle _isPermanentToggle;
         [SerializeField] private Button _sendButton;
         [SerializeField] private Button _deleteButton;
+
         void Start()
         {
-            _sendButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(1)) //連打防止
-                .Subscribe(_ =>
+            var ct = this.GetCancellationTokenOnDestroy();
+
+            _sendButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
+                    try
+                    {
+                        //運営コメント送信
+                        await _manager.NicoliveApiClient
+                            .SendOperatorCommentAsync(
+                                _bodyInputField.text,
+                                _nameInputField.text,
+                                _colorDropdown.options[_colorDropdown.value].text,
+                                _isPermanentToggle.isOn, c);
 
-                    //運営コメント送信
-                    _manager.NicoliveApiClient
-                        .SendOperatorCommentAsync(
-                            _bodyInputField.text,
-                            _nameInputField.text,
-                            _colorDropdown.options[_colorDropdown.value].text,
-                            _isPermanentToggle.isOn
-                        ).Subscribe(__ => { }, Debug.LogError);
-                });
+                        await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: c);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, cancellationToken: ct)
+                .Forget();
 
-            _deleteButton.OnClickAsObservable()
-                .ThrottleFirst(TimeSpan.FromSeconds(1)) //連打防止
-                .Subscribe(_ =>
+            _deleteButton.OnClickAsAsyncEnumerable(ct)
+                .ForEachAwaitWithCancellationAsync(async (_, c) =>
                 {
-
-                    //運営コメント削除
-                    _manager.NicoliveApiClient
-                        .DeleteOperatorCommentAsync()
-                        .Subscribe(__ => { }, Debug.LogError);
-                });
+                    try
+                    {
+                        //運営コメント削除
+                        await _manager.NicoliveApiClient
+                            .DeleteOperatorCommentAsync(c);
+                    }
+                    catch (Exception e) when (e is not OperationCanceledException)
+                    {
+                        Debug.LogError(e);
+                    }
+                }, cancellationToken: ct)
+                .Forget();
         }
-
     }
 }
