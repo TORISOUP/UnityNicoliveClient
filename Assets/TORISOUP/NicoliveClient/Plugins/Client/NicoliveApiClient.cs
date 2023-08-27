@@ -23,12 +23,7 @@ namespace TORISOUP.NicoliveClient.Client
         /// 現在の操作対象となっている番組ID
         /// </summary>
         public string NicoliveProgramId { get; private set; }
-
-        /// <summary>
-        /// pgから始まる方の番組ID
-        /// </summary>
-        private string _pgProgramId;
-
+        
         private string _userAgent = "UnityNicoliveClient";
 
         #region Setup
@@ -58,7 +53,6 @@ namespace TORISOUP.NicoliveClient.Client
         /// </summary>
         public void SetNicoliveProgramId(string id)
         {
-            if (NicoliveProgramId != id) _pgProgramId = null;
             NicoliveProgramId = id;
         }
 
@@ -321,18 +315,19 @@ namespace TORISOUP.NicoliveClient.Client
             uwr.SetRequestHeader("User-Agent", _userAgent);
             try
             {
-                await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
-                var json = uwr.downloadHandler.text;
                 try
                 {
-                    var dto = JsonUtility.FromJson<ApiResponseDto<ProgramInfoDto>>(json);
-                    var programInfo = dto.data.ToProgramInfo();
-                    return programInfo;
+                    await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
                 }
                 catch (Exception)
                 {
                     throw new ProgramNotFoundException($"{lv} is not found.");
                 }
+
+                var json = uwr.downloadHandler.text;
+                var dto = JsonUtility.FromJson<ApiResponseDto<ProgramInfoDto>>(json);
+                var programInfo = dto.data.ToProgramInfo();
+                return programInfo;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -375,7 +370,6 @@ namespace TORISOUP.NicoliveClient.Client
         /// <summary>
         /// アンケートを開始する
         /// </summary>
-        /// <param name="nicoliveProgramId">lvから始まる方のID</param>
         /// <param name="title">アンケートタイトル</param>
         /// <param name="questions">設問</param>
         /// <returns></returns>
@@ -399,16 +393,15 @@ namespace TORISOUP.NicoliveClient.Client
             IEnumerable<string> questions,
             CancellationToken ct)
         {
-            var pg = await GetPgProgramIdAsync(nicoliveProgramId, ct);
-            await _StartEnqueteAsync(pg, title, questions, ct);
+            await _StartEnqueteAsync(nicoliveProgramId, title, questions, ct);
         }
 
-        private async UniTask _StartEnqueteAsync(string pg,
+        private async UniTask _StartEnqueteAsync(string lv,
             string title,
             IEnumerable<string> questions,
             CancellationToken ct)
         {
-            var url = $"https://live2.nicovideo.jp/unama/api/v1/programs/{pg}/enquete";
+            var url = $"https://live2.nicovideo.jp/unama/watch/{lv}/enquete";
 
             var items = questions as string[] ?? questions.ToArray();
 
@@ -419,7 +412,6 @@ namespace TORISOUP.NicoliveClient.Client
 
             var json = JsonUtility.ToJson(new EnqueteRequest
             {
-                programId = _pgProgramId,
                 question = title,
                 items = items
             });
@@ -458,19 +450,14 @@ namespace TORISOUP.NicoliveClient.Client
         /// <returns></returns>
         public async UniTask<EnqueteResult> ShowResultEnqueteAsync(string nicoliveProgramId, CancellationToken ct)
         {
-            var pg = await GetPgProgramIdAsync(nicoliveProgramId, ct);
-            return await _ShowResultEnqueteAsync(pg, ct);
+            return await _ShowResultEnqueteAsync(nicoliveProgramId, ct);
         }
 
-        private async UniTask<EnqueteResult> _ShowResultEnqueteAsync(string pg, CancellationToken ct)
+        private async UniTask<EnqueteResult> _ShowResultEnqueteAsync(string lv, CancellationToken ct)
         {
-            var url = $"https://live2.nicovideo.jp/unama/api/v1/programs/{pg}/enquete/show_result";
-
-            var json = "{ \"programId\":" + pg + " }";
+            var url = $"https://live2.nicovideo.jp/unama/watch/{lv}/enquete/result";
 
             using var uwr = UnityWebRequest.Post(url, "POST");
-            var data = Encoding.UTF8.GetBytes(json);
-            uwr.uploadHandler = new UploadHandlerRaw(data);
             uwr.SetRequestHeader("Content-type", "application/json");
             uwr.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
             uwr.SetRequestHeader("User-Agent", _userAgent);
@@ -489,33 +476,29 @@ namespace TORISOUP.NicoliveClient.Client
         }
 
         /// <summary>
-        /// アンケートの結果を表示する
+        /// アンケートを終了する
         /// </summary>
         /// <returns></returns>
         public async UniTask FinishEnqueteAsync(CancellationToken ct)
         {
             await FinishEnqueteAsync(NicoliveProgramId, ct);
         }
-        
+
         /// <summary>
-        /// アンケートの結果を表示する
+        /// アンケートを終了する
         /// </summary>
         /// <returns></returns>
         public async UniTask FinishEnqueteAsync(string nicoliveProgramId, CancellationToken ct)
         {
-            var pg = await GetPgProgramIdAsync(nicoliveProgramId, ct);
-            await _FinishEnqueteCoroutine(ct);
+            await _FinishEnqueteCoroutine(nicoliveProgramId,ct);
         }
 
-        private async UniTask _FinishEnqueteCoroutine(CancellationToken ct)
+        private async UniTask _FinishEnqueteCoroutine(string nicoliveProgramId, CancellationToken ct)
         {
-            var url = $"https://live2.nicovideo.jp/unama/api/v1/programs/{_pgProgramId}/enquete/end";
+            var url = $"https://live2.nicovideo.jp/unama/watch/{nicoliveProgramId}/enquete";
 
-            var json = "{ \"programId\":" + _pgProgramId + " }";
 
-            using var uwr = UnityWebRequest.Post(url, "POST");
-            var data = Encoding.UTF8.GetBytes(json);
-            uwr.uploadHandler = new UploadHandlerRaw(data);
+            using var uwr = UnityWebRequest.Delete(url);
             uwr.SetRequestHeader("Content-type", "application/json");
             uwr.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
             uwr.SetRequestHeader("User-Agent", _userAgent);
@@ -531,42 +514,7 @@ namespace TORISOUP.NicoliveClient.Client
         }
 
         #endregion
-
-        #region pg取得
-
-        /// <summary>
-        /// 現在の操作対象のpgから始まる方の番組IDを取得する
-        /// </summary>
-        public async UniTask<string> GetPgProgramIdAsync(CancellationToken ct)
-        {
-            return await GetPgProgramIdAsync(NicoliveProgramId, ct);
-        }
-
-        /// <summary>
-        /// pgから始まる方の番組IDを取得する
-        /// </summary>
-        public async UniTask<string> GetPgProgramIdAsync(string lv, CancellationToken ct)
-        {
-            var url = $"https://live2.nicovideo.jp/watch/{lv}/player";
-
-            using var uwr = UnityWebRequest.Get(url);
-            uwr.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
-            uwr.SetRequestHeader("User-Agent", _userAgent);
-
-            try
-            {
-                await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
-                var json = uwr.downloadHandler.text;
-                var programId = Regex.Match(json, "programId\":\"(.*?)\"").Groups[1].Value;
-                return programId;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                throw new NicoliveApiClientException(uwr.downloadHandler.text, ex);
-            }
-        }
-
-        #endregion
+        
     }
 
 

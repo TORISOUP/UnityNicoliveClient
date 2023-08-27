@@ -29,7 +29,14 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramIdPan
                     try
                     {
                         //取得したIDは一旦UIに反映
-                        _programIdInputField.text = (await _manager.GetCurrentProgramIdAsync(c)).Last();
+                        var programs = await _manager.GetCurrentProgramIdAsync(c);
+                        if (programs.Length == 0)
+                        {
+                            Debug.LogError("番組IDが取得できませんでした");
+                            _programIdInputField.text = "";
+                            return;
+                        }
+                        _programIdInputField.text = programs.Last();
                     }
                     catch (Exception e) when (e is not OperationCanceledException)
                     {

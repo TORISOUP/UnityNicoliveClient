@@ -175,25 +175,19 @@ namespace TORISOUP.NicoliveClient.Response
         public Uri WebSocketUri { get; private set; }
 
         /// <summary>
-        /// コメントサーバのURI（XmlSocket）
-        /// </summary>
-        public Uri XmlSocketUri { get; private set; }
-
-        /// <summary>
         /// スレッドID
         /// </summary>
         public string ThreadId { get; private set; }
 
         public CommentServerInfo CommentServerInfo { get; }
 
-        public Room(string name, int id, string webSocketUri, string xmlSocketUri, string threadId) : this()
+        public Room(string name, int id, string webSocketUri, string threadId) : this()
         {
             Name = name;
             Id = id;
             WebSocketUri = new Uri(webSocketUri);
-            XmlSocketUri = new Uri(xmlSocketUri);
             ThreadId = threadId;
-            CommentServerInfo = new CommentServerInfo(Name, WebSocketUri, XmlSocketUri, ThreadId);
+            CommentServerInfo = new CommentServerInfo(Name, WebSocketUri, ThreadId);
         }
     }
 
@@ -291,12 +285,11 @@ namespace TORISOUP.NicoliveClient.Response
         public string name;
         public int id;
         public string webSocketUri;
-        public string xmlSocketUri;
         public string threadId;
 
         public Room ToRoom()
         {
-            return new Room(name, id, webSocketUri, xmlSocketUri, threadId);
+            return new Room(name, id, webSocketUri, threadId);
         }
     }
 
