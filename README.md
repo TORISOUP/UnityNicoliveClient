@@ -3,7 +3,13 @@
 UnityNicoliveClientはニコニコ生放送の新配信番組をUnityから操作するクライアントです。  
 新配信のユーザ生放送にのみ対応しています。
 
-UniRxの使用を前提にしています。
+
+# 依存ライブラリ
+
+次のライブラリを別途導入する必要があります。
+
+* UniRx
+* UniTask
 
 # 機能一覧
 
@@ -12,11 +18,11 @@ UniRxの使用を前提にしています。
  * 番組延長手段取得
  * 番組延長
  * 運営コメント投稿/削除
- * BSPコメント投稿
  * 番組情報取得
  * 番組統計情報取得（来場者数、コメント数）
  * コメント取得
- * アンケートの実行
+ * アンケートの実行/終了
+   * (アンケートの結果表示は壊れてて動きません)
 
 # 使い方
 
@@ -28,17 +34,10 @@ UniRxの使用を前提にしています。
  4. 各種メソッドを実行
 
 ```cs
-IEnumerator LoginCoroutine()
+public async UniTask LoginAsync(string mail, string pass, CancellationToken ct)
 {
-    var mail = "ニコニコのメールアドレス";
-    var pass = "ニコニコのパスワード";
-
     //ログイン実行
-    var u = NiconicoUserClient.LoginAsync(mail, pass).ToYieldInstruction();
-    yield return u; //ログイン処理を待機
-
-    //ログインに成功するとユーザ情報が返ってくる
-    NiconicoUser user = u.Result;
+    NiconicoUser user = await NiconicoUserClient.LoginAsync(mail, pass, ct);
 
     //クライアントにユーザ情報を渡して初期化
     var client = new NicoliveApiClient(user);
@@ -47,10 +46,7 @@ IEnumerator LoginCoroutine()
     client.SetNicoliveProgramId("lv123456");
 
     //運営コメントを非同期で投稿
-    client.SendOperatorCommentAsync("テスト投稿");
-
-    //投稿が終わるのを同期的に待つ場合はToYieldInstruction()
-    yield return client.SendOperatorCommentAsync("テスト投稿").ToYieldInstruction();
+    await client.SendOperatorCommentAsync("名前", "テスト投稿", "white", false, ct);
 }
 ```
 
@@ -76,14 +72,13 @@ client.SetCustomUserAgent("YourApplicationNameHere");
 
 ### コミュニティ番組のみでよい場合
 
-`GetCurrentCommunityProgramIdAsync()` で取得可能。取得できない場合は`OnError()`が返る。  
+`GetCurrentCommunityProgramIdAsync()` で取得可能。
 **※番組作成後にAPIで取得できるようになるまで１分程度かかる点に注意。**
 
 
 ```cs
 //現在放送中の番組ID取得
-client.GetCurrentCommunityProgramIdAsync()
-    .Subscribe(lv => Debug.Log(lv));
+string[] programs = await client.GetCurrentCommunityProgramIdAsync(ct);
 ```
 
 ### チャンネル番組を含む場合
@@ -99,24 +94,20 @@ client.GetCurrentCommunityProgramIdAsync()
 
 ```cs
 var targetChannelId = "ch123456789";
+var programs = await client.GetScheduledProgramListAsync(ct);
 
-client.GetScheduledProgramListAsync()
-    .Subscribe(programs =>
+foreach (var programSchedule in programs)
+{
+    if (programSchedule.SocialGroupId == targetChannelId
+        && programSchedule.Status == ProgramStatus.OnAir
+        && programSchedule.Status == ProgramStatus.Test //テスト放送も判定に含めるなら必要
+       )
     {
-        foreach (var programSchedule in programs)
-        {
-            if (programSchedule.SocialGroupId == targetChannelId
-                && programSchedule.Status == ProgramStatus.OnAir
-                && programSchedule.Status == ProgramStatus.Test //テスト放送も判定に含めるなら必要
-            )
-            {
-                Debug.Log(targetChannelId + "は現在、" + programSchedule.ProgramId + "で配信中です。");
-                return;
-            }
-        }
-
-        Debug.Log(targetChannelId + "は現在配信していません。");
-    });
+        Debug.Log(targetChannelId + "は現在、" + programSchedule.ProgramId + "で配信中です。");
+        return;
+    }
+}
+Debug.Log(targetChannelId + "は現在配信していません。");
 ```
 
 
@@ -126,8 +117,7 @@ client.GetScheduledProgramListAsync()
 `GetProgramInfoAsync` で取得可能
 
 ```cs
-var programInfo = default(ProgramInfo);
-client.GetProgramInfoAsync().Subscribe(x => programInfo = x);
+ProgramInfo result = await client.GetProgramInfoAsync("lv123456", ct);
 ```
 
 ## コメントを取得する
@@ -142,91 +132,29 @@ client.GetProgramInfoAsync().Subscribe(x => programInfo = x);
 **使い終わったら必ずDispose()を実行すること！**
 
 ```cs
-IEnumerator CommentCoroutine(NiconicoUser user, NicoliveApiClient apiClient)
-{
-    //番組情報取得
-    var pi = apiClient.GetProgramInfoAsync().ToYieldInstruction();
-    yield return pi;
+//番組情報取得
+var pi = await client.GetProgramInfoAsync("lv12345", ct);
 
-    // 番組の部屋一覧
-    // 自分が放送する番組の場合は全部屋取得できる
-    // 他人の放送の場合は「座席を取得済み」の場合のみ、その座席のある部屋の情報が1つ取得できる
-    var rooms = pi.Result.Rooms;
+// 番組の部屋一覧
+// 自分が放送する番組の場合は全部屋取得できる
+// 他人の放送の場合は「座席を取得済み」の場合のみ、その座席のある部屋の情報が1つ取得できる
+var rooms = pi.Rooms;
 
-    //先頭の部屋に接続するコメントクライアントを作成
-    var commentClient = new NicoliveCommentClient(rooms.First(), user.UserId);
+//先頭の部屋に接続するコメントクライアントを作成
+using var commentClient = new NicoliveCommentClient(rooms.First(), user.UserId);
 
-    //コメント購読設定
-    commentClient.OnMessageAsObservable.Subscribe(x => Debug.Log(x.Content));
+//コメント購読設定
+commentClient.OnMessageAsObservable.Subscribe(x => Debug.Log(x.Content));
 
-    //クライアント接続
-    commentClient.Connect(resFrom: 0);
+//クライアント接続
+commentClient.Connect(resFrom: 0);
 
-    yield return new WaitForSeconds(10);
+await UniTask.Delay(TimeSpan.FromSeconds(10));
 
-    //おかたづけ
-    commentClient.Disconnect();
-    commentClient.Dispose();
-}
+//おかたづけ
+commentClient.Disconnect();
 ```
 
-## アンケート
-
-```cs
-IEnumerator EnqueteCoroutine(NicoliveApiClient client)
-{
-    var title = "どれが好き？";
-    var questions = new string[] { "き○この山", "た○のこの里", "コ○ラのマーチ" };
-
-    //アンケートの実行
-    client.StartEnqueteAsync(title, questions);
-
-
-    //回答時間
-    yield return new WaitForSeconds(10);
-
-
-    //結果表示
-    var ri = client.ShowResultEnqueteAsync().ToYieldInstruction();
-    yield return ri; //APIの結果待ち
-    var enqueteResult = ri.Result;
-
-    //結果表示
-    Debug.Log(enqueteResult.Title);
-    foreach (var i in enqueteResult.Items)
-    {
-        //各要素の回答率
-        Debug.Log(string.Format("{0}:{1}%", i.Name, i.Rate));
-    }
-
-
-    //結果表示待機
-    yield return new WaitForSeconds(3);
-
-
-    //アンケート終了
-    client.FinishEnqueteAsync();
-}
-```
-
-
-## エラーハンドリング
-
-```cs
-//失敗時はOnErrorが通知される
-client.SendOperatorCommentAsync("テスト投稿")
-    .Subscribe(_ => { }, ex => Debug.LogError(ex));
-```
-
-## その他
-
-`NicoliveApiClient`が提供する各種メソッドは全てHot変換(PublishLast)済み。
-そのため明示的な`Subscribe()`は省略可能。
-
-```cs
-client.SendOperatorCommentAsync("テスト投稿").Subscribe(); 
-client.SendOperatorCommentAsync("テスト投稿"); //Subscribeを省略しても実行される
-```
 
 # 配布ライセンス
 
@@ -237,6 +165,9 @@ MITライセンス
 
 UniRx
 Copyright (c) 2014 Yoshifumi Kawai https://github.com/neuecc/UniRx/blob/master/LICENSE
+
+UniTask
+Copyright (c) 2019 Yoshifumi Kawai / Cysharp, Inc. https://github.com/Cysharp/UniTask/blob/master/LICENSE
 
 websocket-sharp
 Copyright (c) 2010-2018 sta.blockhead https://github.com/sta/websocket-sharp/blob/master/LICENSE.txt
