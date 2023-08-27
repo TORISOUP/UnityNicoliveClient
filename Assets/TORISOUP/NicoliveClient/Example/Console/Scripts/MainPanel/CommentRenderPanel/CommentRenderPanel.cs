@@ -1,15 +1,15 @@
-﻿using UnityEngine;
-using UniRx;
+﻿using UniRx;
+using UnityEngine;
 using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentRenderPanel
 {
     /// <summary>
     /// コメントを描画する（重い）
     /// </summary>
     public class CommentRenderPanel : MonoBehaviour
     {
-        [SerializeField] private CommentPanel _commentPanelManager;
+        [SerializeField] private CommentPanel.CommentPanel _commentPanelManager;
 
         [SerializeField] private Transform _renderAreaParent;
 

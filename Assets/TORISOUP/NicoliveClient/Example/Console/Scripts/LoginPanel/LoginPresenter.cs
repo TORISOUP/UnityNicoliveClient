@@ -3,7 +3,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel
 {
     /// <summary>
     /// ログイン画面のUIとの接合部

@@ -4,7 +4,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ScheduledProgramPanel
 {
     public class ScheduledProgramPanel : MonoBehaviour
     {

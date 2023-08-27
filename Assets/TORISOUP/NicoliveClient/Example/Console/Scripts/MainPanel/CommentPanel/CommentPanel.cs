@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
-using UnityEngine.UI;
+using TORISOUP.NicoliveClient.Client;
+using TORISOUP.NicoliveClient.Comment;
+using TORISOUP.NicoliveClient.Response;
 using UniRx;
 using UniRx.Triggers;
+using UnityEngine;
+using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentPanel
 {
     /// <summary>
     /// 接続可能な部屋に繋いでコメントを受信するサンプル

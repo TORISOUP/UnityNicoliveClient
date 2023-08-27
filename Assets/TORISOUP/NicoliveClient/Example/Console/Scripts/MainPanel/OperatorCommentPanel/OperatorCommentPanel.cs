@@ -3,7 +3,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.OperatorCommentPanel
 {
     /// <summary>
     /// 運営コメントパネルのUI

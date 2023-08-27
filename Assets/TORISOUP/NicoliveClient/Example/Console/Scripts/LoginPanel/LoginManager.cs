@@ -1,7 +1,8 @@
-﻿using UniRx;
+﻿using TORISOUP.NicoliveClient.Client;
+using UniRx;
 using UnityEngine;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel
 {
     /// <summary>
     /// ログイン状態の管理

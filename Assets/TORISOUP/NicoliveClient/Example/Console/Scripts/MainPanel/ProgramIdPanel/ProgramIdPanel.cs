@@ -3,7 +3,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramIdPanel
 {
     /// <summary>
     /// 番組ID部分のUI表示

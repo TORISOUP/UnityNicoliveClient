@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
-using NicoliveClient.Example;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramStatisticsPanel
 {
     public class ProgramStatisticsPanel : MonoBehaviour
     {

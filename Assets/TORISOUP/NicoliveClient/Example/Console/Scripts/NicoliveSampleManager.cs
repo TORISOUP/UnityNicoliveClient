@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using TORISOUP.NicoliveClient.Client;
+using TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel;
+using TORISOUP.NicoliveClient.Response;
 using UniRx;
 using UnityEngine;
 
-namespace NicoliveClient.Example
+namespace TORISOUP.NicoliveClient.Example.Console.Scripts
 {
     public class NicoliveSampleManager : MonoBehaviour
     {
