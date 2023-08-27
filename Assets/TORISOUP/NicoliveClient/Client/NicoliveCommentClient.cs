@@ -33,7 +33,7 @@ namespace TORISOUP.NicoliveClient.Client
         public string ThreadId { get; private set; }
 
         private IObservable<Chat> _onMessageAsObservable;
-        private object lockObject = new object();
+        private readonly object _lockObject = new object();
 
         /// <summary>
         /// 受信したコメントオブジェクトを通知する
@@ -42,7 +42,7 @@ namespace TORISOUP.NicoliveClient.Client
         {
             get
             {
-                lock (lockObject)
+                lock (_lockObject)
                 {
                     return !_isDisposed ? _onMessageAsObservable : Observable.Empty<Chat>();
                 }
@@ -123,7 +123,10 @@ namespace TORISOUP.NicoliveClient.Client
         /// </summary>
         public void Disconnect()
         {
-            _ws.CloseAsync();
+            if (_ws != null && _ws.IsAlive)
+            {
+                _ws.CloseAsync();
+            }
         }
 
         /// <summary>
@@ -131,12 +134,9 @@ namespace TORISOUP.NicoliveClient.Client
         /// </summary>
         public void Dispose()
         {
-            lock (lockObject)
+            lock (_lockObject)
             {
-                if (_ws != null)
-                {
-                    _ws.CloseAsync();
-                }
+                _ws?.CloseAsync();
 
                 if (_disposedEventAsyncSubject != null)
                 {

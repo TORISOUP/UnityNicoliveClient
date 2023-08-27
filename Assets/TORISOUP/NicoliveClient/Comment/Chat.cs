@@ -5,7 +5,7 @@ namespace TORISOUP.NicoliveClient.Comment
     /// <summary>
     /// コメントブジェクト
     /// </summary>
-    public struct Chat
+    public struct Chat : IEquatable<Chat>
     {
         /// <summary>
         /// ThreadId
@@ -63,7 +63,17 @@ namespace TORISOUP.NicoliveClient.Comment
         /// <value></value>
         public int Score { get; private set; }
 
-        public Chat(string thread, long vpos, long date, string mail, string userId, int premium, bool anonymity, string content, int no, int roomId, int score) : this()
+        public Chat(string thread,
+            long vpos,
+            long date,
+            string mail,
+            string userId,
+            int premium,
+            bool anonymity,
+            string content,
+            int no,
+            int roomId,
+            int score) : this()
         {
             Thread = thread;
             Vpos = vpos;
@@ -93,10 +103,39 @@ namespace TORISOUP.NicoliveClient.Comment
         {
             get { return (Premium & 2) != 0; }
         }
+
+        public bool Equals(Chat other)
+        {
+            return Thread == other.Thread && Vpos == other.Vpos && Date == other.Date && Mail == other.Mail &&
+                   UserId == other.UserId && Premium == other.Premium && Anonymity == other.Anonymity &&
+                   Content == other.Content && No == other.No && RoomId == other.RoomId && Score == other.Score;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Chat other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = new HashCode();
+            hashCode.Add(Thread);
+            hashCode.Add(Vpos);
+            hashCode.Add(Date);
+            hashCode.Add(Mail);
+            hashCode.Add(UserId);
+            hashCode.Add(Premium);
+            hashCode.Add(Anonymity);
+            hashCode.Add(Content);
+            hashCode.Add(No);
+            hashCode.Add(RoomId);
+            hashCode.Add(Score);
+            return hashCode.ToHashCode();
+        }
     }
 
     [Serializable]
-    internal struct ChatDto
+    internal struct ChatDto : IEquatable<ChatDto>
     {
         public string thread;
         public long vpos;
@@ -128,7 +167,35 @@ namespace TORISOUP.NicoliveClient.Comment
                 no,
                 roomId,
                 score
-                );
+            );
+        }
+
+        public bool Equals(ChatDto other)
+        {
+            return thread == other.thread && vpos == other.vpos && date == other.date && mail == other.mail &&
+                   user_id == other.user_id && premium == other.premium && anonymity == other.anonymity &&
+                   content == other.content && no == other.no && score == other.score;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is ChatDto other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = new HashCode();
+            hashCode.Add(thread);
+            hashCode.Add(vpos);
+            hashCode.Add(date);
+            hashCode.Add(mail);
+            hashCode.Add(user_id);
+            hashCode.Add(premium);
+            hashCode.Add(anonymity);
+            hashCode.Add(content);
+            hashCode.Add(no);
+            hashCode.Add(score);
+            return hashCode.ToHashCode();
         }
     }
 

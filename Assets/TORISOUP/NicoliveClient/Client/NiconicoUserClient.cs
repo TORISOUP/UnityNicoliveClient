@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Text.RegularExpressions;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -14,16 +16,12 @@ namespace TORISOUP.NicoliveClient.Client
     {
         /// <summary>
         /// ニコニコにログインする
+        /// 2段階認証は未対応
         /// </summary>
         /// <param name="mail">メールアドレス</param>
         /// <param name="password">パスワード</param>
         /// <returns>成功時:NiconicoUser,失敗時:NiconicoLoginException</returns>
-        public static IObservable<NiconicoUser> LoginAsync(string mail, string password)
-        {
-            return Observable.FromCoroutine<NiconicoUser>(o => LoginCoroutine(o, mail, password));
-        }
-
-        private static IEnumerator LoginCoroutine(IObserver<NiconicoUser> observer, string mail, string password)
+        public static async UniTask<NiconicoUser> LoginAsync(string mail, string password, CancellationToken ct)
         {
             var url = "https://account.nicovideo.jp/api/v1/login";
 
@@ -33,31 +31,19 @@ namespace TORISOUP.NicoliveClient.Client
             form.AddField("mail", mail);
             form.AddField("password", password);
 
-            using (var www = UnityWebRequest.Post(url, form))
-            {
-                www.redirectLimit = 0;
+            using var uwr = UnityWebRequest.Post(url, form);
+            uwr.redirectLimit = 0;
 
-#if UNITY_2017_2_OR_NEWER
-                yield return www.SendWebRequest();
-#else
-                yield return www.Send();
-#endif
+            await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
 
-                var cookie = www.GetResponseHeader("Set-Cookie");
-                var match = userSessionRegex.Match(cookie);
+            var cookie = uwr.GetResponseHeader("Set-Cookie");
+            var match = userSessionRegex.Match(cookie);
 
-                if (match.Success)
-                {
-                    var userSession = "user_session_" + match.Groups[1];
-                    var userId = match.Groups[1].ToString().Split('_')[0];
-                    observer.OnNext(new NiconicoUser(userId, userSession));
-                    observer.OnCompleted();
-                }
-                else
-                {
-                    observer.OnError(new NiconicoLoginException("ログインに失敗しました"));
-                }
-            }
+            if (!match.Success) throw new NiconicoLoginException("ログインに失敗しました");
+
+            var userSession = "user_session_" + match.Groups[1];
+            var userId = match.Groups[1].ToString().Split('_')[0];
+            return new NiconicoUser(userId, userSession);
         }
     }
 
