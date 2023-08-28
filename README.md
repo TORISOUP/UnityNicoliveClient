@@ -22,7 +22,6 @@ UnityNicoliveClientはニコニコ生放送の新配信番組をUnityから操�
  * 番組統計情報取得（来場者数、コメント数）
  * コメント取得
  * アンケートの実行/終了
-   * (アンケートの結果表示は壊れてて動きません)
 
 # 使い方
 
@@ -91,7 +90,6 @@ string[] programs = await client.GetCurrentCommunityProgramIdAsync(ct);
  **※番組作成後にAPIで取得できるようになるまで１分程度かかる点に注意。**
 
 
-
 ```cs
 var targetChannelId = "ch123456789";
 var programs = await client.GetScheduledProgramListAsync(ct);
@@ -109,7 +107,6 @@ foreach (var programSchedule in programs)
 }
 Debug.Log(targetChannelId + "は現在配信していません。");
 ```
-
 
 
 ## 番組の詳細情報取得
@@ -153,6 +150,28 @@ await UniTask.Delay(TimeSpan.FromSeconds(10));
 
 //おかたづけ
 commentClient.Disconnect();
+```
+
+## アンケートの実行
+
+```cs
+// アンケート開始
+await client.StartEnqueteAsync(
+    "lv12345",
+    "好きな食べ物は？",
+    new[] { "バナナ", "りんご", "カレー" }, ct);
+
+
+// 結果表示＆取得
+var result = await client.ShowResultEnqueteAsync("lv12345", ct);
+
+foreach (var data in result.Items)
+{
+    Debug.Log($"{data.Name} : {data.Rate}%");
+}
+
+// アンケート終了
+await client.FinishEnqueteAsync("lv12345", ct);
 ```
 
 
