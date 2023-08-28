@@ -34,7 +34,18 @@ namespace TORISOUP.NicoliveClient.Client
             using var uwr = UnityWebRequest.Post(url, form);
             uwr.redirectLimit = 0;
 
-            await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
+            try
+            {
+                await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Redirect limit exceededは無視
+                if (!ex.Message.Contains("Redirect limit exceeded"))
+                {
+                    throw;
+                }
+            }
 
             var cookie = uwr.GetResponseHeader("Set-Cookie");
             var match = userSessionRegex.Match(cookie);
