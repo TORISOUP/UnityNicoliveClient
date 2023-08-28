@@ -432,8 +432,7 @@ namespace TORISOUP.NicoliveClient.Client
                 throw new NicoliveApiClientException(uwr.downloadHandler.text, ex);
             }
         }
-
-
+        
         /// <summary>
         /// アンケートの結果を表示する
         /// </summary>
@@ -442,7 +441,6 @@ namespace TORISOUP.NicoliveClient.Client
         {
             return await ShowResultEnqueteAsync(NicoliveProgramId, ct);
         }
-
 
         /// <summary>
         /// アンケートの結果を表示する
@@ -458,6 +456,8 @@ namespace TORISOUP.NicoliveClient.Client
             var url = $"https://live2.nicovideo.jp/unama/watch/{lv}/enquete/result";
 
             using var uwr = UnityWebRequest.Post(url, "POST");
+            var data = Encoding.UTF8.GetBytes("");
+            uwr.uploadHandler = new UploadHandlerRaw(data);
             uwr.SetRequestHeader("Content-type", "application/json");
             uwr.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
             uwr.SetRequestHeader("User-Agent", _userAgent);
