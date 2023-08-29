@@ -319,9 +319,14 @@ namespace TORISOUP.NicoliveClient.Client
                 {
                     await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
                 }
-                catch (Exception)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    throw new ProgramNotFoundException($"{lv} is not found.");
+                    if (uwr.responseCode == 404)
+                    {
+                        throw new ProgramNotFoundException($"{lv} is not found.");
+                    }
+
+                    throw new NicoliveApiClientException(uwr.downloadHandler.text, ex);
                 }
 
                 var json = uwr.downloadHandler.text;
