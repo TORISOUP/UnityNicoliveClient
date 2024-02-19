@@ -4,6 +4,20 @@ UnityNicoliveClientはニコニコ生放送の新配信番組をUnityから操�
 新配信のユーザ生放送にのみ対応しています。
 
 
+# 導入方法
+
+## R3版（v1.0.0~）
+
+UPMから導入してください。
+
+```
+https://github.com/TORISOUP/UnityNicoliveClient.git?path=Assets/TORISOUP/NicoliveClient/Plugins
+```
+
+## UniRx版
+
+[v2023.09.06](https://github.com/TORISOUP/UnityNicoliveClient/releases/tag/v2023.09.06)
+
 # 依存ライブラリ
 
 次のライブラリを別途導入する必要があります。
