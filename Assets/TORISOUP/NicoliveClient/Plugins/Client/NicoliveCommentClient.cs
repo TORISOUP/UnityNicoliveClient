@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Comment;
 using TORISOUP.NicoliveClient.Response;
-using UniRx;
 using UnityEngine;
 using WebSocketSharp;
+using R3;
 
 namespace TORISOUP.NicoliveClient.Client
 {
@@ -35,14 +35,14 @@ namespace TORISOUP.NicoliveClient.Client
         /// </summary>
         public string ThreadId { get; private set; }
 
-        private IObservable<Chat> _onMessageAsObservable;
-        private readonly object _lockObject = new object();
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private Observable<Chat> _onMessageAsObservable;
+        private readonly object _lockObject = new();
+        private CancellationTokenSource _cancellationTokenSource = new();
 
         /// <summary>
         /// 受信したコメントオブジェクトを通知する
         /// </summary>
-        public IObservable<Chat> OnMessageAsObservable
+        public Observable<Chat> OnMessageAsObservable
         {
             get
             {
@@ -56,7 +56,6 @@ namespace TORISOUP.NicoliveClient.Client
         private bool _isDisposed;
         private readonly string _userId;
         private WebSocket _ws;
-        private AsyncSubject<Unit> _disposedEventAsyncSubject;
 
         #region コンストラクタ
 
@@ -84,17 +83,18 @@ namespace TORISOUP.NicoliveClient.Client
         {
             _ws = new WebSocket(WebSocketUri.AbsoluteUri, "msg.nicovideo.jp#json");
 
-            _disposedEventAsyncSubject = new AsyncSubject<Unit>();
+            var ct = _cancellationTokenSource.Token;
+            
             _onMessageAsObservable =
                 Observable.FromEvent<EventHandler<MessageEventArgs>, MessageEventArgs>(
                         h => (sender, e) => h(e),
                         h => _ws.OnMessage += h,
-                        h => _ws.OnMessage -= h)
-                    .ObserveOn(Scheduler.ThreadPool) //Jsonのパース処理をThreadPoolで行う
+                        h => _ws.OnMessage -= h,
+                        ct)
+                    .ObserveOnThreadPool()
                     .Select(x => JsonUtility.FromJson<CommentDto>(x.Data))
                     .Where(x => x.chat.IsSuccess())
                     .Select(x => x.chat.ToChat(RoomId))
-                    .TakeUntil(_disposedEventAsyncSubject)
                     .ObserveOnMainThread() //Unityメインスレッドに戻す
                     .Share();
         }
@@ -162,14 +162,7 @@ namespace TORISOUP.NicoliveClient.Client
             lock (_lockObject)
             {
                 Disconnect();
-
-                if (_disposedEventAsyncSubject != null)
-                {
-                    _disposedEventAsyncSubject.OnNext(Unit.Default);
-                    _disposedEventAsyncSubject.OnCompleted();
-                    _disposedEventAsyncSubject.Dispose();
-                }
-
+                
                 _ws = null;
                 _isDisposed = true;
             }

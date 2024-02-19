@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Request;
 using TORISOUP.NicoliveClient.Response;
-using TORISOUP.NicoliveClient.Utilities;
-using UniRx;
 using UnityEngine;
 using UnityEngine.Networking;
 
