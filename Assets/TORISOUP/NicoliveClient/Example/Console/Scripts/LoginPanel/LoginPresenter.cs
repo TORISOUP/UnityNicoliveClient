@@ -1,7 +1,6 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Linq;
-using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +18,9 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel
         [SerializeField] private Button _singIn;
         [SerializeField] private Text _errorMessage;
 
+        [SerializeField] private Button _logoutButton;
+        [SerializeField] private Button _loginBySavedUserButton;
+
         void Start()
         {
             //ログインボタンが押された
@@ -32,11 +34,41 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel
                         {
                             _errorMessage.text = "";
                             await _loginManager.LoginAsync(_mail.text, _pass.text, ct);
+
+                            _loginManager.SaveUser(_loginManager.CurrentUser);
                         }
                         catch (Exception e)
                         {
                             _errorMessage.text = e.Message;
                         }
+                    },
+                    this.GetCancellationTokenOnDestroy())
+                .Forget();
+
+            _loginBySavedUserButton
+                .OnClickAsAsyncEnumerable(this.GetCancellationTokenOnDestroy())
+                .ForEachAsync(
+                    _ =>
+                    {
+                        try
+                        {
+                            _errorMessage.text = "";
+                            _loginManager.LoadUser();
+                        }
+                        catch (Exception e)
+                        {
+                            _errorMessage.text = e.Message;
+                        }
+                    },
+                    this.GetCancellationTokenOnDestroy())
+                .Forget();
+            
+            _logoutButton
+                .OnClickAsAsyncEnumerable(this.GetCancellationTokenOnDestroy())
+                .ForEachAsync(
+                    _ =>
+                    {
+                        _loginManager.Logout();
                     },
                     this.GetCancellationTokenOnDestroy())
                 .Forget();

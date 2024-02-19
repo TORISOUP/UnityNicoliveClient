@@ -37,7 +37,8 @@ namespace TORISOUP.NicoliveClient.Client
 
         private Observable<Chat> _onMessageAsObservable;
         private readonly object _lockObject = new();
-        private CancellationTokenSource _cancellationTokenSource = new();
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private readonly Subject<Unit> _resetSubject = new();
 
         /// <summary>
         /// 受信したコメントオブジェクトを通知する
@@ -84,7 +85,7 @@ namespace TORISOUP.NicoliveClient.Client
             _ws = new WebSocket(WebSocketUri.AbsoluteUri, "msg.nicovideo.jp#json");
 
             var ct = _cancellationTokenSource.Token;
-            
+
             _onMessageAsObservable =
                 Observable.FromEvent<EventHandler<MessageEventArgs>, MessageEventArgs>(
                         h => (sender, e) => h(e),
@@ -96,6 +97,7 @@ namespace TORISOUP.NicoliveClient.Client
                     .Where(x => x.chat.IsSuccess())
                     .Select(x => x.chat.ToChat(RoomId))
                     .ObserveOnMainThread() //Unityメインスレッドに戻す
+                    .TakeUntil(_resetSubject)
                     .Share();
         }
 
@@ -108,7 +110,6 @@ namespace TORISOUP.NicoliveClient.Client
         public void Connect(int resFrom)
         {
             Disconnect();
-            _cancellationTokenSource = new CancellationTokenSource();
 
             if (resFrom < 0) resFrom = 0;
 
@@ -136,21 +137,19 @@ namespace TORISOUP.NicoliveClient.Client
             while (!ct.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken: ct).ConfigureAwait(false);
-                if (_ws != null && _ws.IsAlive) _ws.Ping();
+                if (_ws is { IsAlive: true }) _ws.Ping();
             }
         }
-
+    
         /// <summary>
-        /// コメントサーバから切断する
+        /// コメントサーバから切断し、Observableをリセットする
         /// </summary>
         public void Disconnect()
         {
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
-
-            if (_ws != null && _ws.IsAlive)
+            if (_ws is { IsAlive: true })
             {
-                _ws.CloseAsync();
+                _resetSubject.OnNext(Unit.Default);
+                _ws.Close();
             }
         }
 
@@ -162,7 +161,10 @@ namespace TORISOUP.NicoliveClient.Client
             lock (_lockObject)
             {
                 Disconnect();
-                
+
+                _resetSubject.OnCompleted();
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource?.Dispose();
                 _ws = null;
                 _isDisposed = true;
             }

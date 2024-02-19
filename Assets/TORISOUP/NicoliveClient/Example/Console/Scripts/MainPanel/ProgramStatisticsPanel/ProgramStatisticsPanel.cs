@@ -1,6 +1,6 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
-using UniRx;
+using R3;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,7 +21,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramStati
 
             _getButton.OnClickAsObservable()
                 .ThrottleFirst(TimeSpan.FromSeconds(5))
-                .Subscribe(_ => command.Execute())
+                .Subscribe(_ => command.Execute(Unit.Default))
                 .AddTo(ct);
 
             command.Subscribe(_ =>

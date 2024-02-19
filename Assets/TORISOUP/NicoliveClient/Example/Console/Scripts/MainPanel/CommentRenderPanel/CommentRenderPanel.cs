@@ -1,6 +1,6 @@
-﻿using UniRx;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using R3;
 
 namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentRenderPanel
 {
@@ -17,7 +17,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.CommentRende
         {
             var renderPanelCount = _renderAreaParent.childCount;
 
-            _commentPanelManager.OnCommentRecieved
+            _commentPanelManager.OnCommentReceived
                 .Subscribe(message =>
                 {
 
