@@ -63,6 +63,11 @@ namespace TORISOUP.NicoliveClient.Comment
         /// <value></value>
         public int Score { get; private set; }
 
+        /// <summary>
+        /// コメント投稿者の名前
+        /// </summary>
+        public string Name { get; private set; }
+
         public Chat(string thread,
             long vpos,
             long date,
@@ -73,7 +78,8 @@ namespace TORISOUP.NicoliveClient.Comment
             string content,
             int no,
             int roomId,
-            int score) : this()
+            int score,
+            string name)
         {
             Thread = thread;
             Vpos = vpos;
@@ -86,29 +92,15 @@ namespace TORISOUP.NicoliveClient.Comment
             No = no;
             RoomId = roomId;
             Score = score;
-        }
-
-        /// <summary>
-        /// プレミアム会員であるか
-        /// </summary>
-        public bool IsPremium
-        {
-            get { return (Premium & 1) != 0; }
-        }
-
-        /// <summary>
-        /// 運営コメント　または /から始まる特殊なメッセージであるか
-        /// </summary>
-        public bool IsStaff
-        {
-            get { return (Premium & 2) != 0; }
+            Name = name;
         }
 
         public bool Equals(Chat other)
         {
             return Thread == other.Thread && Vpos == other.Vpos && Date == other.Date && Mail == other.Mail &&
                    UserId == other.UserId && Premium == other.Premium && Anonymity == other.Anonymity &&
-                   Content == other.Content && No == other.No && RoomId == other.RoomId && Score == other.Score;
+                   Content == other.Content && No == other.No && RoomId == other.RoomId && Score == other.Score &&
+                   Name == other.Name;
         }
 
         public override bool Equals(object obj)
@@ -130,7 +122,14 @@ namespace TORISOUP.NicoliveClient.Comment
             hashCode.Add(No);
             hashCode.Add(RoomId);
             hashCode.Add(Score);
+            hashCode.Add(Name);
             return hashCode.ToHashCode();
+        }
+
+        public override string ToString()
+        {
+            return
+                $"{nameof(Thread)}: {Thread}, {nameof(Vpos)}: {Vpos}, {nameof(Date)}: {Date}, {nameof(Mail)}: {Mail}, {nameof(UserId)}: {UserId}, {nameof(Premium)}: {Premium}, {nameof(Anonymity)}: {Anonymity}, {nameof(Content)}: {Content}, {nameof(No)}: {No}, {nameof(RoomId)}: {RoomId}, {nameof(Score)}: {Score}, {nameof(Name)}: {Name}";
         }
     }
 
@@ -147,6 +146,7 @@ namespace TORISOUP.NicoliveClient.Comment
         public string content;
         public int no;
         public int score;
+        public string name;
 
         public bool IsSuccess()
         {
@@ -166,7 +166,8 @@ namespace TORISOUP.NicoliveClient.Comment
                 content,
                 no,
                 roomId,
-                score
+                score,
+                name
             );
         }
 
@@ -174,7 +175,7 @@ namespace TORISOUP.NicoliveClient.Comment
         {
             return thread == other.thread && vpos == other.vpos && date == other.date && mail == other.mail &&
                    user_id == other.user_id && premium == other.premium && anonymity == other.anonymity &&
-                   content == other.content && no == other.no && score == other.score;
+                   content == other.content && no == other.no && score == other.score && name == other.name;
         }
 
         public override bool Equals(object obj)
@@ -195,6 +196,7 @@ namespace TORISOUP.NicoliveClient.Comment
             hashCode.Add(content);
             hashCode.Add(no);
             hashCode.Add(score);
+            hashCode.Add(name);
             return hashCode.ToHashCode();
         }
     }
