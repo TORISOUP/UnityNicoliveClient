@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Comment;
 using TORISOUP.NicoliveClient.Response;
-using UniRx;
 using UnityEngine;
 using WebSocketSharp;
+using R3;
 
 namespace TORISOUP.NicoliveClient.Client
 {
@@ -35,14 +35,15 @@ namespace TORISOUP.NicoliveClient.Client
         /// </summary>
         public string ThreadId { get; private set; }
 
-        private IObservable<Chat> _onMessageAsObservable;
-        private readonly object _lockObject = new object();
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private Observable<Chat> _onMessageAsObservable;
+        private readonly object _lockObject = new();
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private readonly Subject<Unit> _resetSubject = new();
 
         /// <summary>
         /// 受信したコメントオブジェクトを通知する
         /// </summary>
-        public IObservable<Chat> OnMessageAsObservable
+        public Observable<Chat> OnMessageAsObservable
         {
             get
             {
@@ -56,7 +57,6 @@ namespace TORISOUP.NicoliveClient.Client
         private bool _isDisposed;
         private readonly string _userId;
         private WebSocket _ws;
-        private AsyncSubject<Unit> _disposedEventAsyncSubject;
 
         #region コンストラクタ
 
@@ -84,18 +84,20 @@ namespace TORISOUP.NicoliveClient.Client
         {
             _ws = new WebSocket(WebSocketUri.AbsoluteUri, "msg.nicovideo.jp#json");
 
-            _disposedEventAsyncSubject = new AsyncSubject<Unit>();
+            var ct = _cancellationTokenSource.Token;
+
             _onMessageAsObservable =
                 Observable.FromEvent<EventHandler<MessageEventArgs>, MessageEventArgs>(
                         h => (sender, e) => h(e),
                         h => _ws.OnMessage += h,
-                        h => _ws.OnMessage -= h)
-                    .ObserveOn(Scheduler.ThreadPool) //Jsonのパース処理をThreadPoolで行う
+                        h => _ws.OnMessage -= h,
+                        ct)
+                    .ObserveOnThreadPool()
                     .Select(x => JsonUtility.FromJson<CommentDto>(x.Data))
                     .Where(x => x.chat.IsSuccess())
                     .Select(x => x.chat.ToChat(RoomId))
-                    .TakeUntil(_disposedEventAsyncSubject)
                     .ObserveOnMainThread() //Unityメインスレッドに戻す
+                    .TakeUntil(_resetSubject)
                     .Share();
         }
 
@@ -108,7 +110,6 @@ namespace TORISOUP.NicoliveClient.Client
         public void Connect(int resFrom)
         {
             Disconnect();
-            _cancellationTokenSource = new CancellationTokenSource();
 
             if (resFrom < 0) resFrom = 0;
 
@@ -136,21 +137,19 @@ namespace TORISOUP.NicoliveClient.Client
             while (!ct.IsCancellationRequested)
             {
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken: ct).ConfigureAwait(false);
-                if (_ws != null && _ws.IsAlive) _ws.Ping();
+                if (_ws is { IsAlive: true }) _ws.Ping();
             }
         }
-
+    
         /// <summary>
-        /// コメントサーバから切断する
+        /// コメントサーバから切断し、Observableをリセットする
         /// </summary>
         public void Disconnect()
         {
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
-
-            if (_ws != null && _ws.IsAlive)
+            if (_ws is { IsAlive: true })
             {
-                _ws.CloseAsync();
+                _resetSubject.OnNext(Unit.Default);
+                _ws.Close();
             }
         }
 
@@ -163,13 +162,9 @@ namespace TORISOUP.NicoliveClient.Client
             {
                 Disconnect();
 
-                if (_disposedEventAsyncSubject != null)
-                {
-                    _disposedEventAsyncSubject.OnNext(Unit.Default);
-                    _disposedEventAsyncSubject.OnCompleted();
-                    _disposedEventAsyncSubject.Dispose();
-                }
-
+                _resetSubject.OnCompleted();
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource?.Dispose();
                 _ws = null;
                 _isDisposed = true;
             }

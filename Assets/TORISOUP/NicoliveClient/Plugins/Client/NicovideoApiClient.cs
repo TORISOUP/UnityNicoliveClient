@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Linq;
 using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Response;
-using TORISOUP.NicoliveClient.Utilities;
-using UniRx;
 using UnityEngine.Networking;
 
 namespace TORISOUP.NicoliveClient.Client

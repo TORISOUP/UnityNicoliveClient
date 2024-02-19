@@ -4,11 +4,26 @@ UnityNicoliveClientはニコニコ生放送の新配信番組をUnityから操�
 新配信のユーザ生放送にのみ対応しています。
 
 
+# 導入方法
+
+## R3版（v1.0.0~）
+
+UPMから導入してください。
+
+```
+https://github.com/TORISOUP/UnityNicoliveClient.git?path=Assets/TORISOUP/NicoliveClient/Plugins
+```
+
+## UniRx版
+
+[v2023.09.06](https://github.com/TORISOUP/UnityNicoliveClient/releases/tag/v2023.09.06)
+
 # 依存ライブラリ
 
 次のライブラリを別途導入する必要があります。
 
-* UniRx
+* R3
+* R3.Unity
 * UniTask
 
 # 機能一覧
@@ -185,8 +200,14 @@ MITライセンス
 UniRx
 Copyright (c) 2014 Yoshifumi Kawai https://github.com/neuecc/UniRx/blob/master/LICENSE
 
+R3
+Copyright (c) 2024 Cysharp, Inc. https://github.com/Cysharp/R3/blob/main/LICENSE
+
 UniTask
 Copyright (c) 2019 Yoshifumi Kawai / Cysharp, Inc. https://github.com/Cysharp/UniTask/blob/master/LICENSE
 
 websocket-sharp
 Copyright (c) 2010-2018 sta.blockhead https://github.com/sta/websocket-sharp/blob/master/LICENSE.txt
+
+NugetForUnity
+Copyright (c) 2018 Patrick McCarthy https://github.com/GlitchEnzo/NuGetForUnity/blob/master/LICENSE

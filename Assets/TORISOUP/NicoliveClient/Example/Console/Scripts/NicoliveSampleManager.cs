@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TORISOUP.NicoliveClient.Client;
 using TORISOUP.NicoliveClient.Example.Console.Scripts.LoginPanel;
 using TORISOUP.NicoliveClient.Response;
-using UniRx;
+using R3;
 using UnityEngine;
 
 namespace TORISOUP.NicoliveClient.Example.Console.Scripts
@@ -16,7 +17,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
         [SerializeField] private GameObject _loginPanel;
         [SerializeField] private GameObject _mainPanel;
         [SerializeField] private GameObject _blockPanel;
-
+        
         private Regex _lvRegex = new Regex(@"^lv\d+$");
 
         public NicoliveApiClient NicoliveApiClient
@@ -27,10 +28,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
         /// <summary>
         /// 現在の部屋情報
         /// </summary>
-        public ReactiveDictionary<int, Room> CurrentRooms
-        {
-            get { return _currentRooms; }
-        }
+        public Dictionary<int, Room> CurrentRooms => _currentRooms;
 
         /// <summary>
         /// 現在のユーザ情報
@@ -40,15 +38,15 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
             get { return _loginManager.CurrentUser; }
         }
 
-        private ReactiveDictionary<int, Room> _currentRooms = new ReactiveDictionary<int, Room>();
+        private readonly Dictionary<int, Room> _currentRooms = new();
         private NicoliveApiClient _nicoliveApiClient;
-        private StringReactiveProperty _currentProgramId = new StringReactiveProperty("");
+        private readonly ReactiveProperty<string> _currentProgramId = new ReactiveProperty<string>("");
 
 
         /// <summary>
         /// 現在の対象番組ID
         /// </summary>
-        public IReadOnlyReactiveProperty<string> CurrentProgramId
+        public ReadOnlyReactiveProperty<string> CurrentProgramId
         {
             get { return _currentProgramId; }
         }
@@ -58,7 +56,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
         /// <summary>
         /// 有効な番組IDが設定されているか
         /// </summary>
-        public IReadOnlyReactiveProperty<bool> IsSetProgramId
+        public ReadOnlyReactiveProperty<bool> IsSetProgramId
         {
             get
             {
@@ -97,7 +95,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
         /// </summary>
         public async UniTask<string[]> GetCurrentProgramIdAsync(CancellationToken ct)
         {
-            if (!_loginManager.IsLoggedIn.Value)
+            if (!_loginManager.IsLoggedIn.CurrentValue)
             {
                 Debug.LogWarning("ログインしていません");
                 throw new Exception("Not logged in.");

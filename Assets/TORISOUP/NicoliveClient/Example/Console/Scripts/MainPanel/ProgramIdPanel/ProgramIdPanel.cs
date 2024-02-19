@@ -2,7 +2,7 @@
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Linq;
-using UniRx;
+using R3;
 using UnityEngine;
 using UnityEngine.UI;
 
