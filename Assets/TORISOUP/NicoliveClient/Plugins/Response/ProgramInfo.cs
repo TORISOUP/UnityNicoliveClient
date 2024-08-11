@@ -65,6 +65,17 @@ namespace TORISOUP.NicoliveClient.Response
         /// </summary>
         public Broadcaster Broadcaster { get; private set; }
 
+        /// <summary>
+        /// 配信設定
+        /// </summary>
+        public StreamSetting StreamSetting { get; private set; }
+
+        /// <summary>
+        /// モデレータ向けの情報が配信されるViewUri
+        /// （視聴者のときはnull）
+        /// </summary>
+        public string ModeratorViewUri { get; private set; }
+
         public ProgramInfo(
             SocialGroup socialGroup,
             Room[] rooms,
@@ -77,7 +88,9 @@ namespace TORISOUP.NicoliveClient.Response
             long endAt,
             string[] categories,
             bool isAdsEnabled,
-            Broadcaster broadcaster
+            Broadcaster broadcaster,
+            StreamSetting streamSetting,
+            string moderatorViewUri
         ) : this()
         {
             ProgramStatus s;
@@ -110,6 +123,8 @@ namespace TORISOUP.NicoliveClient.Response
             Categories = categories;
             IsAdsEnabled = isAdsEnabled;
             Broadcaster = broadcaster;
+            StreamSetting = streamSetting;
+            ModeratorViewUri = moderatorViewUri;
         }
     }
 
@@ -160,34 +175,13 @@ namespace TORISOUP.NicoliveClient.Response
     public struct Room
     {
         /// <summary>
-        /// 部屋名
+        /// コメントサーバに接続するための情報
         /// </summary>
-        public string Name { get; private set; }
+        public string ViewUri { get; }
 
-        /// <summary>
-        /// 番組における部屋のID
-        /// </summary>
-        public int Id { get; private set; }
-
-        /// <summary>
-        /// コメントサーバのURI（WebSocket）
-        /// </summary>
-        public Uri WebSocketUri { get; private set; }
-
-        /// <summary>
-        /// スレッドID
-        /// </summary>
-        public string ThreadId { get; private set; }
-
-        public CommentServerInfo CommentServerInfo { get; }
-
-        public Room(string name, int id, string webSocketUri, string threadId) : this()
+        public Room(string viewUri)
         {
-            Name = name;
-            Id = id;
-            WebSocketUri = new Uri(webSocketUri);
-            ThreadId = threadId;
-            CommentServerInfo = new CommentServerInfo(Name, WebSocketUri, ThreadId);
+            ViewUri = viewUri;
         }
     }
 
@@ -210,6 +204,18 @@ namespace TORISOUP.NicoliveClient.Response
         {
             Id = id;
             Name = name;
+        }
+    }
+
+    public struct StreamSetting
+    {
+        public string MaxQuality { get; }
+        public string Orientation { get; }
+
+        public StreamSetting(string maxQuality, string orientation)
+        {
+            MaxQuality = maxQuality;
+            Orientation = orientation;
         }
     }
 
@@ -244,6 +250,9 @@ namespace TORISOUP.NicoliveClient.Response
         public string[] categories;
         public bool isAdsEnabled;
         public BroadcasterDto broadcaster;
+        public bool isUserNiconicoAdsEnabled;
+        public StreamSettingDto streamSetting;
+        public string moderatorViewUri;
 
         public ProgramInfo ToProgramInfo()
         {
@@ -259,7 +268,9 @@ namespace TORISOUP.NicoliveClient.Response
                 endAt,
                 categories,
                 isAdsEnabled,
-                broadcaster.ToBroadcaster()
+                broadcaster.ToBroadcaster(),
+                streamSetting.ToStreamSetting(),
+                moderatorViewUri
             );
         }
     }
@@ -282,14 +293,11 @@ namespace TORISOUP.NicoliveClient.Response
     [Serializable]
     internal struct RoomDto
     {
-        public string name;
-        public int id;
-        public string webSocketUri;
-        public string threadId;
+        public string viewUri;
 
         public Room ToRoom()
         {
-            return new Room(name, id, webSocketUri, threadId);
+            return new Room(viewUri);
         }
     }
 
@@ -302,6 +310,18 @@ namespace TORISOUP.NicoliveClient.Response
         public Broadcaster ToBroadcaster()
         {
             return new Broadcaster(id, name);
+        }
+    }
+
+    [Serializable]
+    internal struct StreamSettingDto
+    {
+        public string maxQuality;
+        public string orientation;
+
+        public StreamSetting ToStreamSetting()
+        {
+            return new StreamSetting(maxQuality, orientation);
         }
     }
 

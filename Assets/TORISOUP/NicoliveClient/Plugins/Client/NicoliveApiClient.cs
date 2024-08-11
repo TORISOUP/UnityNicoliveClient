@@ -61,57 +61,7 @@ namespace TORISOUP.NicoliveClient.Client
         }
 
         #endregion
-
-
-        #region 放送中番組取得
-
-        /// <summary>
-        /// 現在放送中(テスト中含む)のコミュニティ番組の番組IDを取得する。
-        /// 更新頻度が遅めのAPIなので、数分待たないと最新情報が取得できない場合がある。
-        /// チャンネル番組の放送中IDを取得する場合はGetScheduledProgramListAsync()を使うこと。
-        /// </summary>
-        public async UniTask<string[]> GetCurrentCommunityProgramIdAsync(CancellationToken ct)
-        {
-            var schedules = await GetScheduledProgramListAsync(ct);
-            return schedules
-                .Where(x => x.Status == ProgramStatus.Test || x.Status == ProgramStatus.OnAir)
-                .Select(x => x.ProgramId)
-                .ToArray();
-        }
-
-        #endregion
-
-        #region 放送予定番組一覧取得
-
-        /// <summary>
-        /// 放送予定、現在放送中の番組一覧を取得する
-        /// （更新頻度が遅めのAPIなので、数分待たないと最新値が取得できない場合がある）
-        /// </summary>
-        public async UniTask<ProgramSchedule[]> GetScheduledProgramListAsync(CancellationToken ct)
-        {
-            var url = "https://live2.nicovideo.jp/unama/tool/v1/program_schedules";
-
-            using var uwr = UnityWebRequest.Get(url);
-            uwr.SetRequestHeader("Content-type", "application/json");
-            uwr.SetRequestHeader("Cookie", "user_session=" + _niconicoUser.UserSession);
-            uwr.SetRequestHeader("User-Agent", _userAgent);
-
-            try
-            {
-                await uwr.SendWebRequest().ToUniTask(cancellationToken: ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                throw new NicoliveApiClientException(uwr.downloadHandler.text, ex);
-            }
-
-            var json = uwr.downloadHandler.text;
-            var dto = JsonUtility.FromJson<ApiResponseDto<ProgramScheduleDto[]>>(json);
-            var schedules = dto.data.Select(x => x.ToProgramSchedule()).ToArray();
-            return schedules;
-        }
-
-        #endregion
+        
 
         #region 運営コメント
 

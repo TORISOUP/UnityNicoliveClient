@@ -28,7 +28,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
         /// <summary>
         /// 現在の部屋情報
         /// </summary>
-        public Dictionary<int, Room> CurrentRooms => _currentRooms;
+        public Dictionary<string, Room> CurrentRooms => _currentRooms;
 
         /// <summary>
         /// 現在のユーザ情報
@@ -38,7 +38,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
             get { return _loginManager.CurrentUser; }
         }
 
-        private readonly Dictionary<int, Room> _currentRooms = new();
+        private readonly Dictionary<string, Room> _currentRooms = new();
         private NicoliveApiClient _nicoliveApiClient;
         private readonly ReactiveProperty<string> _currentProgramId = new ReactiveProperty<string>("");
 
@@ -88,21 +88,6 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts
 
             IsSetProgramId
                 .Subscribe(x => _blockPanel.SetActive(!x));
-        }
-
-        /// <summary>
-        /// 現在のユーザに紐づく番組IDを取得する
-        /// </summary>
-        public async UniTask<string[]> GetCurrentProgramIdAsync(CancellationToken ct)
-        {
-            if (!_loginManager.IsLoggedIn.CurrentValue)
-            {
-                Debug.LogWarning("ログインしていません");
-                throw new Exception("Not logged in.");
-            }
-
-            //番組ID取得
-            return await _nicoliveApiClient.GetCurrentCommunityProgramIdAsync(ct);
         }
 
         /// <summary>
