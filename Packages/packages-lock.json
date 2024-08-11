@@ -7,21 +7,21 @@
       "dependencies": {
         "com.unity.modules.imgui": "1.0.0"
       },
-      "hash": "dd89b7dae413ef0f479ac45f1f2b06776fef726d"
+      "hash": "2798494d642f30893c478e58dceb83929a0d5fbd"
     },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "809d23edae0df58fd0f61b4b6f67855c59d1b2fb"
+      "hash": "f057abff0f4ea52e4c9699c2831808d6c0a27bcc"
     },
     "com.github-glitchenzo.nugetforunity": {
       "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "75f68222d0a4bd2b468dbf3e6a17a191d28041ab"
+      "hash": "90fa6db024148d466fe738f58fd4263c7267346b"
     },
     "com.unity.collab-proxy": {
       "version": "1.17.7",
