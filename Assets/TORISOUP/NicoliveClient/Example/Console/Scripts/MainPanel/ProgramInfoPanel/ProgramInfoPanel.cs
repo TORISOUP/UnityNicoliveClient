@@ -34,14 +34,11 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramInfoP
                         builder.Append("room count:" + programInfo.Rooms.Length + "\n");
                         builder.Append("status:" + programInfo.Status.ToString() + "\n");
                         _programInfoLabel.text = builder.ToString();
-
+                        
                         //部屋一覧を登録する
                         foreach (var room in programInfo.Rooms)
                         {
-                            if (!_manager.CurrentRooms.ContainsKey(room.Id))
-                            {
-                                _manager.CurrentRooms[room.Id] = room;
-                            }
+                            _manager.CurrentRooms.TryAdd(room.ViewUri, room);
                         }
                     }
                     catch (Exception e) when (e is not OperationCanceledException)

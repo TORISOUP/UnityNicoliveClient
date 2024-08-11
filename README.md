@@ -1,7 +1,6 @@
 # UnityNicoliveClient
 
 UnityNicoliveClientはニコニコ生放送の新配信番組をUnityから操作するクライアントです。  
-新配信のユーザ生放送にのみ対応しています。
 
 
 # 導入方法
@@ -35,8 +34,12 @@ https://github.com/TORISOUP/UnityNicoliveClient.git?path=Assets/TORISOUP/Nicoliv
  * 運営コメント投稿/削除
  * 番組情報取得
  * 番組統計情報取得（来場者数、コメント数）
- * コメント取得
+ * ~コメント取得~ 
  * アンケートの実行/終了
+
+コメントの取得については[NdgrClientSharp](https://github.com/TORISOUP/NdgrClientSharp)を利用してください。
+
+またコミュニティの概念がなくなったため、それに関係する機能を削除しました。
 
 # 使い方
 
@@ -66,7 +69,7 @@ public async UniTask LoginAsync(string mail, string pass, CancellationToken ct)
 
 ## 操作する番組の設定
 
-`SetNicoliveProgramId()`を実行する。これを実行しないとApiClientは動作しない。
+`SetNicoliveProgramId()`を実行する。これを実行しないとApiClientは動作しません。
 
 ```cs
 client.SetNicoliveProgramId("lv123456");
@@ -81,49 +84,6 @@ client.SetNicoliveProgramId("lv123456");
 client.SetCustomUserAgent("YourApplicationNameHere");
 ```
 
-## 自分が今放送している番組のID取得
-
-
-### コミュニティ番組のみでよい場合
-
-`GetCurrentCommunityProgramIdAsync()` で取得可能。
-**※番組作成後にAPIで取得できるようになるまで１分程度かかる点に注意。**
-
-
-```cs
-//現在放送中の番組ID取得
-string[] programs = await client.GetCurrentCommunityProgramIdAsync(ct);
-```
-
-### チャンネル番組を含む場合
-
-チャンネル番組を含めて放送中IDが欲しい場合は、 `GetScheduledProgramListAsync()` 使う必要がある。
-
- `GetScheduledProgramListAsync()`を利用すると、ユーザに紐付いた放送予定・放送中のコミュニティ・チャンネル番組を一覧で取得できる。
- その中から該当のチャンネルIDの番組IDを検索する必要がある。
- 
- **※番組作成後にAPIで取得できるようになるまで１分程度かかる点に注意。**
-
-
-```cs
-var targetChannelId = "ch123456789";
-var programs = await client.GetScheduledProgramListAsync(ct);
-
-foreach (var programSchedule in programs)
-{
-    if (programSchedule.SocialGroupId == targetChannelId
-        && programSchedule.Status == ProgramStatus.OnAir
-        && programSchedule.Status == ProgramStatus.Test //テスト放送も判定に含めるなら必要
-       )
-    {
-        Debug.Log(targetChannelId + "は現在、" + programSchedule.ProgramId + "で配信中です。");
-        return;
-    }
-}
-Debug.Log(targetChannelId + "は現在配信していません。");
-```
-
-
 ## 番組の詳細情報取得
 
 `GetProgramInfoAsync` で取得可能
@@ -134,38 +94,58 @@ ProgramInfo result = await client.GetProgramInfoAsync("lv123456", ct);
 
 ## コメントを取得する
 
-1. `GetProgramInfoAsync` で番組情報(`ProgramInfo`)を取得する
-2. `ProgramInfo`の中の`Room`を使って`NicoliveCommentClient`を初期化する
-3. `NicoliveCommentClient.OnMessageAsObservable()` を購読してコメントを受け取る
-4. `NicoliveCommentClient.Connect()` でコメントサーバに接続
-5. `NicoliveCommentClient.Disconnect()` で一時切断
-6. `NicoliveCommentClient.Dispose()` で破棄
+コメントの取得については[NdgrClientSharp](https://github.com/TORISOUP/NdgrClientSharp)を利用してください。
 
-**使い終わったら必ずDispose()を実行すること！**
+1. `GetProgramInfoAsync` で番組情報(`ProgramInfo`)を取得する
+2. `ProgramInfo`の中の`Room.ViewUei`を使ってNDGR（ニコ生の新コメントサーバー）に接続する
+3. `NdgrClientSharp`の`NdgrLiveCommentFetcher`を使ってコメントを取得する
+
 
 ```cs
-//番組情報取得
-var pi = await client.GetProgramInfoAsync("lv12345", ct);
+// 番組情報取得
+var programInfo = await client.GetProgramInfoAsync("lv12345", ct);
 
-// 番組の部屋一覧
-// 自分が放送する番組の場合は全部屋取得できる
-// 他人の放送の場合は「座席を取得済み」の場合のみ、その座席のある部屋の情報が1つ取得できる
-var rooms = pi.Rooms;
+// 新仕様にニコ生では常にRoomは1つ
+// そこに入っているViewUriを使う
+var viewUri = programInfo.Rooms[0].ViewUri
 
-//先頭の部屋に接続するコメントクライアントを作成
-using var commentClient = new NicoliveCommentClient(rooms.First(), user.UserId);
+// 生放送コメント取得用のクライアントを生成
+var liveCommentFetcher = new NdgrLiveCommentFetcher();
 
-//コメント購読設定
-commentClient.OnMessageAsObservable.Subscribe(x => Debug.Log(x.Content));
+// コメントの受信準備
+liveCommentFetcher
+    .OnMessageReceived
+    .Subscribe(chukedMessage =>
+    {
+        switch (chukedMessage.PayloadCase)
+        {
+            case ChunkedMessage.PayloadOneofCase.Message:
+                // コメントやギフトの情報などはMessage
+                Debug.Log(chukedMessage.Message);
+                break;
+            case ChunkedMessage.PayloadOneofCase.State:
+                // 番組他状態の変更などはStateから取得可能
+                Debug.Log(chukedMessage.State);
+                break;
 
-//クライアント接続
-commentClient.Connect(resFrom: 0);
+            default:
+                break;
+        }
+    });
 
-await UniTask.Delay(TimeSpan.FromSeconds(10));
+// コメントの受信開始
+liveCommentFetcher.Connect(viewUri);
 
-//おかたづけ
-commentClient.Disconnect();
+// ---
+
+// コメントの受信停止
+liveCommentFetcher.Disconnect();
+
+// リソースの解放(忘れずに)
+liveCommentFetcher.Dispose();
 ```
+
+詳しくは[NdgrClientSharp](https://github.com/TORISOUP/NdgrClientSharp)のREADMEを参照してください。
 
 ## アンケートの実行
 
@@ -205,9 +185,6 @@ Copyright (c) 2024 Cysharp, Inc. https://github.com/Cysharp/R3/blob/main/LICENSE
 
 UniTask
 Copyright (c) 2019 Yoshifumi Kawai / Cysharp, Inc. https://github.com/Cysharp/UniTask/blob/master/LICENSE
-
-websocket-sharp
-Copyright (c) 2010-2018 sta.blockhead https://github.com/sta/websocket-sharp/blob/master/LICENSE.txt
 
 NugetForUnity
 Copyright (c) 2018 Patrick McCarthy https://github.com/GlitchEnzo/NuGetForUnity/blob/master/LICENSE
