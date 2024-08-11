@@ -34,7 +34,7 @@ namespace TORISOUP.NicoliveClient.Example.Console.Scripts.MainPanel.ProgramInfoP
                         builder.Append("room count:" + programInfo.Rooms.Length + "\n");
                         builder.Append("status:" + programInfo.Status.ToString() + "\n");
                         _programInfoLabel.text = builder.ToString();
-
+                        
                         //部屋一覧を登録する
                         foreach (var room in programInfo.Rooms)
                         {
